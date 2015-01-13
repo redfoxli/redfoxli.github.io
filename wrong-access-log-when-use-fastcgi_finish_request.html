@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>wrong-access-log-when-use-fastcgi_finish_request</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="lihongbin">
+
+    <!-- Le styles -->
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .tag-1 {
+        font-size: 13pt;
+      }
+      .tag-2 {
+        font-size: 10pt;
+      }
+      .tag-2 {
+        font-size: 8pt;
+      }
+      .tag-4 {
+        font-size: 6pt;
+     }
+    </style>
+    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
+        <link href="/theme/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/theme/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+
+    <link href="/" type="application/atom+xml" rel="alternate" title="redfox ATOM Feed" />
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/index.html">redfox </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+                          <li class="divider-vertical"></li>
+                  <li class="active">
+                    <a href="/category/php.html">
+						<i class="icon-folder-open icon-large"></i>php
+					</a>
+                  </li>
+
+                          <ul class="nav pull-right">
+                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
+                          </ul>
+
+            </ul>
+            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="span12" id="content">
+<section id="content">
+        <article>
+                <header>
+                        <h1>
+                                <a href=""
+                                        rel="bookmark"
+                                        title="Permalink to wrong-access-log-when-use-fastcgi_finish_request">
+                                        wrong-access-log-when-use-fastcgi_finish_request
+                                </a>
+                        </h1>
+                </header>
+                <div class="entry-content">
+                <div class="well">
+<footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2015-01-13T12:37:04">
+        <i class="icon-calendar"></i>Tue 13 January 2015
+</abbr>
+<span class="label">By</span>
+<a href="/author/lihongbin.html"><i class="icon-user"></i>lihongbin</a>
+<span class="label">Category</span>
+<a href="/category/php.html"><i class="icon-folder-open"></i>php</a>.
+
+
+<span class="label">Tags</span>
+	<a href="/tag/all.html"><i class="icon-tag"></i>all</a>
+	<a href="/tag/.html"><i class="icon-tag"></i></a>
+</footer><!-- /.post-info -->                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id11">1&nbsp;&nbsp;&nbsp;问题</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id2" id="id12">1.1&nbsp;&nbsp;&nbsp;背景</a></li>
+<li><a class="reference internal" href="#id3" id="id13">1.2&nbsp;&nbsp;&nbsp;复现</a><ul class="auto-toc">
+<li><a class="reference internal" href="#code" id="id14">1.2.1&nbsp;&nbsp;&nbsp;code</a></li>
+<li><a class="reference internal" href="#id4" id="id15">1.2.2&nbsp;&nbsp;&nbsp;期待结果</a></li>
+<li><a class="reference internal" href="#id5" id="id16">1.2.3&nbsp;&nbsp;&nbsp;实际结果</a></li>
+<li><a class="reference internal" href="#id6" id="id17">1.2.4&nbsp;&nbsp;&nbsp;测试结果说明</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7" id="id18">2&nbsp;&nbsp;&nbsp;定位</a><ul class="auto-toc">
+<li><a class="reference internal" href="#access-log" id="id19">2.1&nbsp;&nbsp;&nbsp;打印access.log相关逻辑</a></li>
+<li><a class="reference internal" href="#fpm-request-finished" id="id20">2.2&nbsp;&nbsp;&nbsp;fpm_request_finished相关逻辑</a></li>
+<li><a class="reference internal" href="#id8" id="id21">2.3&nbsp;&nbsp;&nbsp;结论</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id9" id="id22">3&nbsp;&nbsp;&nbsp;解决</a><ul class="auto-toc">
+<li><a class="reference internal" href="#bug" id="id23">3.1&nbsp;&nbsp;&nbsp;向官方提bug</a></li>
+<li><a class="reference internal" href="#id10" id="id24">3.2&nbsp;&nbsp;&nbsp;源码上解决</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id11">1&nbsp;&nbsp;&nbsp;问题</a></h2>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id12">1.1&nbsp;&nbsp;&nbsp;背景</a></h3>
+<p>在线上准备用fpm的access log 统计不同api的耗时和cpu使用情况，但是发现access log里显示的内容 <tt class="docutils literal">不准确</tt></p>
+<p>通过定位，发现是使用了 <tt class="docutils literal">fastcgi_finish_request</tt> 导致的这个问题</p>
+</div>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id13">1.2&nbsp;&nbsp;&nbsp;复现</a></h3>
+<p>基于 <tt class="docutils literal"><span class="pre">php-5.5.20</span></tt> 版本</p>
+<p>在fpm里启用access log，格式设置为:</p>
+<pre class="literal-block">
+access.format = &quot;%R - %u %t %T %s %{mili}d %{kilo}M %C%%&quot;
+</pre>
+<div class="section" id="code">
+<h4><a class="toc-backref" href="#id14">1.2.1&nbsp;&nbsp;&nbsp;code</a></h4>
+<pre class="literal-block">
+&lt;?php
+    echo &quot;hi\n&quot;;
+    fastcgi_finish_request();
+</pre>
+</div>
+<div class="section" id="id4">
+<h4><a class="toc-backref" href="#id15">1.2.2&nbsp;&nbsp;&nbsp;期待结果</a></h4>
+<blockquote>
+127.0.0.1 -  <tt class="docutils literal">13/Jan/2015:12:30:07</tt> +0800 13/Jan/2015:12:30:07 +0800 200 <tt class="docutils literal">0.913</tt> 256 0.00%</blockquote>
+</div>
+<div class="section" id="id5">
+<h4><a class="toc-backref" href="#id16">1.2.3&nbsp;&nbsp;&nbsp;实际结果</a></h4>
+<blockquote>
+127.0.0.1 -  <tt class="docutils literal">01/Jan/1970:08:00:00</tt> +0800 13/Jan/2015:12:30:07 +0800 200 <tt class="docutils literal">3896627338.811</tt> 256 0.00%</blockquote>
+</div>
+<div class="section" id="id6">
+<h4><a class="toc-backref" href="#id17">1.2.4&nbsp;&nbsp;&nbsp;测试结果说明</a></h4>
+<p>至少有两个内容不符合预期</p>
+<ul class="simple">
+<li>收到请求的时间，即%t: server time the request was received</li>
+<li>处理时间，即%d: time taken to serve the request</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="id7">
+<h2><a class="toc-backref" href="#id18">2&nbsp;&nbsp;&nbsp;定位</a></h2>
+<p>源码之下无秘密，so，看源码吧</p>
+<div class="section" id="access-log">
+<h3><a class="toc-backref" href="#id19">2.1&nbsp;&nbsp;&nbsp;打印access.log相关逻辑</a></h3>
+<p>在fpm的主函数里，当处理完一个请求的时候，就先调用fpm_request_end标记请求已经完成，并计算各种打印信息，最后调用fpm_log_write打印access.log</p>
+<p>相关代码如下:</p>
+<pre class="literal-block">
+int main(int argc, char *argv[])
+{
+    //.............
+    fcgi_init_request(&amp;request, fcgi_fd);
+     zend_first_try {
+        while (fcgi_accept_request(&amp;request) &gt;= 0) {
+
+            //.................
+            fpm_request_executing();
+
+            php_execute_script(&amp;file_handle TSRMLS_CC);
+            //............
+            fpm_request_end(TSRMLS_C);
+            fpm_log_write(NULL TSRMLS_CC);
+            //.............
+        }
+    //.............
+}
+
+int fpm_log_write(char *log_format TSRMLS_DC)
+{
+    //..................
+    s = log_format;
+
+    while (*s != '\0') {
+        //................
+        switch (*s) {
+            case 't': /* time */
+                if (!test) {
+                    time_t *t;
+                    if (*s == 't') {
+                        t = &amp;proc.accepted_epoch; //we need proc.accepted_epoch here
+                                                  //but when we use fastcgi_finish_request, we will clean the value of proc.accepted_epoch before call fpm_log_write
+                    }
+                    //................
+                }
+                format[0] = '\0';
+                break;
+            case 'u':
+            //......................
+        }
+    }
+    return 0;
+}
+</pre>
+</div>
+<div class="section" id="fpm-request-finished">
+<h3><a class="toc-backref" href="#id20">2.2&nbsp;&nbsp;&nbsp;fpm_request_finished相关逻辑</a></h3>
+<p>当php代码中走到 fastcgi_finish_request()，就会调用关闭与client的socket，同时调用fpm_request_finished设置进程的状态，但是这里却有一个问题</p>
+<p><strong>在fpm_request_finished里就把proc-&gt;accepted_epoch &amp;&amp; proc-&gt;accepted清掉，导致后续打印日志的时候，就不符合预期了</strong></p>
+<p>php代码的调用逻辑如下:</p>
+<pre class="literal-block">
+main -&gt; php_execute_script -&gt; fastcgi_finish_request -&gt; fcgi_close -&gt; fpm_request_finished -&gt; fpm_request_end -&gt; fpm_log_write
+</pre>
+<p>相关代码:</p>
+<pre class="literal-block">
+PHP_FUNCTION(fastcgi_finish_request)
+{
+    //.................
+    if (request-&gt;fd &gt;= 0) {
+        //.......................
+        fcgi_close(request, 0, 0);
+        RETURN_TRUE;
+    }
+    //................
+}
+
+void fcgi_close(fcgi_request *req, int force, int destroy)
+{
+
+      //.............
+    if ((force || !req-&gt;keep) &amp;&amp; req-&gt;fd &gt;= 0) {
+        //.............
+        req-&gt;fd = -1;
+        fpm_request_finished();
+    }
+}
+
+void fpm_request_finished()
+{
+    //.....................
+    proc-&gt;request_stage = FPM_REQUEST_FINISHED;
+    proc-&gt;tv = now;
+    memset(&amp;proc-&gt;accepted, 0, sizeof(proc-&gt;accepted));//~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    proc-&gt;accepted_epoch = 0; //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    fpm_scoreboard_proc_release(proc);
+}
+</pre>
+</div>
+<div class="section" id="id8">
+<h3><a class="toc-backref" href="#id21">2.3&nbsp;&nbsp;&nbsp;结论</a></h3>
+<p>代码中使用fastcgi_finish_request的时候，会调用fpm_request_finished，但是在fpm_request_finished里会把统计时候用的参数清零，导致后续打印日志的时候就不符合预期了</p>
+</div>
+</div>
+<div class="section" id="id9">
+<h2><a class="toc-backref" href="#id22">3&nbsp;&nbsp;&nbsp;解决</a></h2>
+<div class="section" id="bug">
+<h3><a class="toc-backref" href="#id23">3.1&nbsp;&nbsp;&nbsp;向官方提bug</a></h3>
+<p>在bugs.php.net上提了一个bug:</p>
+<pre class="literal-block">
+https://bugs.php.net/bug.php?id=68822
+</pre>
+</div>
+<div class="section" id="id10">
+<h3><a class="toc-backref" href="#id24">3.2&nbsp;&nbsp;&nbsp;源码上解决</a></h3>
+<p>说实话，我没有想到一个比较好的解决办法</p>
+<p>只是把fpm_request_finished里清空统计参数的那两句话注释了</p>
+<p>虽然这个也能worker，但是感觉怪怪的，感觉在留坑</p>
+<p>相关修改代码diff:</p>
+<pre class="literal-block">
+&#64;&#64; -221,8 +221,6 &#64;&#64; void fpm_request_finished() /* {{{ */
+
+        proc-&gt;request_stage = FPM_REQUEST_FINISHED;
+        proc-&gt;tv = now;
+    -   memset(&amp;proc-&gt;accepted, 0, sizeof(proc-&gt;accepted));
+    -   proc-&gt;accepted_epoch = 0;
+        fpm_scoreboard_proc_release(proc);
+     }
+ /* }}} */
+</pre>
+</div>
+</div>
+
+                </div><!-- /.entry-content -->
+        </article>
+</section>
+        </div><!--/span-->
+
+                <div class="span3 well sidebar-nav" id="sidebar">
+<ul class="nav nav-list">
+
+<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
+<li>
+<a href="/category/php.html">
+    <i class="icon-folder-open icon-large"></i>php
+</a>
+</li>
+
+<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
+<li class="tag-3">
+    <a href="/tag/security.html">
+        <i class="icon-tag icon-large"></i>security
+    </a>
+</li>
+<li class="tag-1">
+    <a href="/tag/.html">
+        <i class="icon-tag icon-large"></i>
+    </a>
+</li>
+<li class="tag-1">
+    <a href="/tag/all.html">
+        <i class="icon-tag icon-large"></i>all
+    </a>
+</li>
+
+
+</ul>        </div><!--/.well -->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <address id="about">
+                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
+                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
+        </address><!-- /#about -->
+
+        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
+                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+
+
+    <!-- Le javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/theme/js/jquery-1.7.2.min.js"></script>
+    <script src="/theme/js/bootstrap.min.js"></script>
+  </body>
+</html>

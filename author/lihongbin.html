@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>redfox - lihongbin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="lihongbin">
+
+    <!-- Le styles -->
+    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+      .tag-1 {
+        font-size: 13pt;
+      }
+      .tag-2 {
+        font-size: 10pt;
+      }
+      .tag-2 {
+        font-size: 8pt;
+      }
+      .tag-4 {
+        font-size: 6pt;
+     }
+    </style>
+    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
+        <link href="/theme/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/theme/images/favicon.ico">
+    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+
+    <link href="/" type="application/atom+xml" rel="alternate" title="redfox ATOM Feed" />
+
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="/index.html">redfox </a>
+          <div class="nav-collapse">
+            <ul class="nav">
+                          <li class="divider-vertical"></li>
+                  <li >
+                    <a href="/category/php.html">
+						<i class="icon-folder-open icon-large"></i>php
+					</a>
+                  </li>
+
+                          <ul class="nav pull-right">
+                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
+                          </ul>
+
+            </ul>
+            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="span12" id="content">
+        <div class="article">
+                <h1><a href="/wrong-access-log-when-use-fastcgi_finish_request.html">wrong-access-log-when-use-fastcgi_finish_request</a></h1>
+                <div class="well small"><footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2015-01-13T12:37:04">
+        <i class="icon-calendar"></i>Tue 13 January 2015
+</abbr>
+<span class="label">By</span>
+<a href="/author/lihongbin.html"><i class="icon-user"></i>lihongbin</a>
+<span class="label">Category</span>
+<a href="/category/php.html"><i class="icon-folder-open"></i>php</a>.
+
+
+<span class="label">Tags</span>
+	<a href="/tag/all.html"><i class="icon-tag"></i>all</a>
+	<a href="/tag/.html"><i class="icon-tag"></i></a>
+</footer><!-- /.post-info --></div>
+                <div class="summary"><div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id11">1&nbsp;&nbsp;&nbsp;问题</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id2" id="id12">1.1&nbsp;&nbsp;&nbsp;背景</a></li>
+<li><a class="reference internal" href="#id3" id="id13">1.2&nbsp;&nbsp;&nbsp;复现</a><ul class="auto-toc">
+<li><a class="reference internal" href="#code" id="id14">1.2.1&nbsp;&nbsp;&nbsp;code</a></li>
+<li><a class="reference internal" href="#id4" id="id15">1.2.2&nbsp;&nbsp;&nbsp;期待结果</a></li>
+<li><a class="reference internal" href="#id5" id="id16">1.2.3&nbsp;&nbsp;&nbsp;实际结果</a></li>
+<li><a class="reference internal" href="#id6" id="id17">1.2.4&nbsp;&nbsp;&nbsp;测试结果说明</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7" id="id18">2&nbsp;&nbsp;&nbsp;定位</a><ul class="auto-toc">
+<li><a class="reference internal" href="#access-log" id="id19">2.1&nbsp;&nbsp;&nbsp;打印access.log相关逻辑</a></li>
+<li><a class="reference internal" href="#fpm-request-finished" id="id20">2.2&nbsp;&nbsp;&nbsp;fpm_request_finished相关逻辑</a></li>
+<li><a class="reference internal" href="#id8" id="id21">2.3&nbsp;&nbsp;&nbsp;结论</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id9" id="id22">3&nbsp;&nbsp;&nbsp;解决</a><ul class="auto-toc">
+<li><a class="reference internal" href="#bug" id="id23">3.1&nbsp;&nbsp;&nbsp;向官方提bug</a></li>
+<li><a class="reference internal" href="#id10" id="id24">3.2&nbsp;&nbsp;&nbsp;源码上解决</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id11">1&nbsp;&nbsp;&nbsp;问题</a></h2>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id12">1 ...</a></h3></div></div>
+                        <a class="btn primary xsmall" href="/wrong-access-log-when-use-fastcgi_finish_request.html">more ...</a>
+                </div>
+        </div>
+        <hr />
+        <div class="article">
+                <h1><a href="/make-service-unavailable-by-fin-loss-attack.html">make-service-unavailable-by-fin-loss-attack</a></h1>
+                <div class="well small"><footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2014-12-16T18:32:12">
+        <i class="icon-calendar"></i>Tue 16 December 2014
+</abbr>
+<span class="label">By</span>
+<a href="/author/lihongbin.html"><i class="icon-user"></i>lihongbin</a>
+<span class="label">Category</span>
+<a href="/category/php.html"><i class="icon-folder-open"></i>php</a>.
+
+
+<span class="label">Tags</span>
+	<a href="/tag/all.html"><i class="icon-tag"></i>all</a>
+	<a href="/tag/security.html"><i class="icon-tag"></i>security</a>
+</footer><!-- /.post-info --></div>
+                <div class="summary"><div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id8">1&nbsp;&nbsp;&nbsp;问题</a></li>
+<li><a class="reference internal" href="#id2" id="id9">2&nbsp;&nbsp;&nbsp;做法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id3" id="id10">2.1&nbsp;&nbsp;&nbsp;思路</a></li>
+<li><a class="reference internal" href="#demo-code" id="id11">2.2&nbsp;&nbsp;&nbsp;demo-code</a></li>
+<li><a class="reference internal" href="#id4" id="id12">2.3&nbsp;&nbsp;&nbsp;测试结果</a></li>
+<li><a class="reference internal" href="#id5" id="id13">2.4&nbsp;&nbsp;&nbsp;网络交互流程图</a></li>
+<li><a class="reference internal" href="#refer-code" id="id14">2.5&nbsp;&nbsp;&nbsp;refer code</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#request-terminate-timeout" id="id15">3&nbsp;&nbsp;&nbsp;request_terminate_timeout能解决问题?</a></li>
+<li><a class="reference internal" href="#nginx" id="id16">4&nbsp;&nbsp;&nbsp;nginx的解决办法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#lingering-close" id="id17">4.1&nbsp;&nbsp;&nbsp;lingering_close</a></li>
+<li><a class="reference internal" href="#lingering-time" id="id18">4.2&nbsp;&nbsp;&nbsp;lingering_time</a></li>
+<li><a class="reference internal" href="#lingering-timeout" id="id19">4.3&nbsp;&nbsp;&nbsp;lingering_timeout</a></li>
+<li><a class="reference internal" href="#id6" id="id20">4.4&nbsp;&nbsp;&nbsp;refer code</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#php" id="id21">5&nbsp;&nbsp;&nbsp;php的解决办法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id7" id="id22">5.1&nbsp;&nbsp;&nbsp;思路</a></li>
+<li><a class="reference internal" href="#refer-core-code" id="id23">5.2&nbsp;&nbsp;&nbsp;refer core code ...</a></li></ul></li></ul></div>
+                        <a class="btn primary xsmall" href="/make-service-unavailable-by-fin-loss-attack.html">more ...</a>
+                </div>
+        </div>
+        <hr />
+        <div class="article">
+                <h1><a href="/fast-cgi-protocol.html">fast-cgi-protocol</a></h1>
+                <div class="well small"><footer class="post-info">
+<span class="label">Date</span>
+<abbr class="published" title="2014-10-25T15:37:27">
+        <i class="icon-calendar"></i>Sat 25 October 2014
+</abbr>
+<span class="label">By</span>
+<a href="/author/lihongbin.html"><i class="icon-user"></i>lihongbin</a>
+<span class="label">Category</span>
+<a href="/category/php.html"><i class="icon-folder-open"></i>php</a>.
+
+
+<span class="label">Tags</span>
+	<a href="/tag/all.html"><i class="icon-tag"></i>all</a>
+	<a href="/tag/.html"><i class="icon-tag"></i></a>
+</footer><!-- /.post-info --></div>
+                <div class="summary"><div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id19">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#cgi-fastcgi-php-fpm" id="id20">2&nbsp;&nbsp;&nbsp;cgi&amp;&amp;fastcgi&amp;&amp;php-fpm的关系</a><ul class="auto-toc">
+<li><a class="reference internal" href="#cgi" id="id21">2.1&nbsp;&nbsp;&nbsp;cgi</a></li>
+<li><a class="reference internal" href="#fastcgi" id="id22">2.2&nbsp;&nbsp;&nbsp;fastcgi</a></li>
+<li><a class="reference internal" href="#php-fpm" id="id23">2.3&nbsp;&nbsp;&nbsp;php-fpm</a></li>
+<li><a class="reference internal" href="#id2" id="id24">2.4&nbsp;&nbsp;&nbsp;总结</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id3" id="id25">3&nbsp;&nbsp;&nbsp;fastcgi协议</a><ul class="auto-toc">
+<li><a class="reference internal" href="#webserver" id="id26">3.1&nbsp;&nbsp;&nbsp;与webserver的交互流程图</a></li>
+<li><a class="reference internal" href="#id4" id="id27">3.2&nbsp;&nbsp;&nbsp;基本协议包结构</a></li>
+<li><a class="reference internal" href="#fcgi-begin-request" id="id28">3.3&nbsp;&nbsp;&nbsp;FCGI_BEGIN_REQUEST包</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id5" id="id29">3.3.1&nbsp;&nbsp;&nbsp;包头举例</a></li>
+<li><a class="reference internal" href="#id6" id="id30">3.3.2&nbsp;&nbsp;&nbsp;包体介绍</a></li>
+<li><a class="reference internal" href="#id7" id="id31">3.3.3&nbsp;&nbsp;&nbsp;包体举例</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fcgi-params" id="id32">3.4&nbsp;&nbsp;&nbsp;FCGI_PARAMS包</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id8" id="id33">3.4.1 ...</a></li></ul></li></ul></li></ul></div>
+                        <a class="btn primary xsmall" href="/fast-cgi-protocol.html">more ...</a>
+                </div>
+        </div>
+        <hr />
+
+        </div><!--/span-->
+
+                <div class="span3 well sidebar-nav" id="sidebar">
+<ul class="nav nav-list">
+
+<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
+<li>
+<a href="/category/php.html">
+    <i class="icon-folder-open icon-large"></i>php
+</a>
+</li>
+
+<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
+<li class="tag-3">
+    <a href="/tag/security.html">
+        <i class="icon-tag icon-large"></i>security
+    </a>
+</li>
+<li class="tag-1">
+    <a href="/tag/.html">
+        <i class="icon-tag icon-large"></i>
+    </a>
+</li>
+<li class="tag-1">
+    <a href="/tag/all.html">
+        <i class="icon-tag icon-large"></i>all
+    </a>
+</li>
+
+
+</ul>        </div><!--/.well -->
+
+      </div><!--/row-->
+
+      <hr>
+
+      <footer>
+        <address id="about">
+                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
+                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
+        </address><!-- /#about -->
+
+        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
+                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
+      </footer>
+
+    </div><!--/.fluid-container-->
+
+
+
+    <!-- Le javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/theme/js/jquery-1.7.2.min.js"></script>
+    <script src="/theme/js/bootstrap.min.js"></script>
+  </body>
+</html>
