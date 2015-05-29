@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>lower-diff-between-php-and-mysql - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="/lower-diff-between-php-and-mysql.html">
+
+        <meta name="author" content="lihongbin" />
+        <meta name="keywords" content="all,php,mysql" />
+        <meta name="description" content="Table of Contents 1   主题 2   问题 3   做的事情 1   主题 主要记录 php与mysql在大小写转换上的区别 问题 2   问题 mysql的大写转小写函数( lower ) 与 php的大写转小写函数( mb_strtolower , strtolower 这个很low，就不说了 )在大部分case上是一致的，但是存在一些例外 case: $str = &#34;High School D×DⅡ &#34;; echo mb_strtolower( $str, &#34;UTF-8&#34;) . &#34;\n&#34;; php 的输出为: high school d×dⅡ 而mysql的输出为: high school d×dⅱ 当然 小写转大写也是存在这个问题的 ..." />
+
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="lower-diff-between-php-and-mysql"/>
+        <meta property="og:url" content="/lower-diff-between-php-and-mysql.html"/>
+        <meta property="og:description" content="Table of Contents 1   主题 2   问题 3   做的事情 1   主题 主要记录 php与mysql在大小写转换上的区别 问题 2   问题 mysql的大写转小写函数( lower ) 与 php的大写转小写函数( mb_strtolower , strtolower 这个很low，就不说了 )在大部分case上是一致的，但是存在一些例外 case: $str = &#34;High School D×DⅡ &#34;; echo mb_strtolower( $str, &#34;UTF-8&#34;) . &#34;\n&#34;; php 的输出为: high school d×dⅡ 而mysql的输出为: high school d×dⅱ 当然 小写转大写也是存在这个问题的 ..."/>
+        <meta property="article:published_time" content="2015-05-28" />
+            <meta property="article:section" content="php" />
+            <meta property="article:tag" content="all" />
+            <meta property="article:tag" content="php" />
+            <meta property="article:tag" content="mysql" />
+            <meta property="article:author" content="lihongbin" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="/lower-diff-between-php-and-mysql.html"
+                       rel="bookmark"
+                       title="Permalink to lower-diff-between-php-and-mysql">
+                        lower-diff-between-php-and-mysql
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-05-28T16:30:38+08:00"> Thu 28 May 2015</time>
+    </span>
+            <span class="label label-default">Modified</span>
+            <span class="modified">
+                <i class="fa fa-calendar"></i><time datetime="2015-05-29T17:25:28+08:00"> Fri 29 May 2015</time>
+            </span>
+            <span class="label label-default">By</span>
+            <a href="/author/lihongbin.html"><i class="fa fa-user"></i> lihongbin</a>
+
+        <span class="label label-default">Category</span>
+        <a href="/category/php.html">php</a>
+
+
+<span class="label label-default">Tags</span>
+	<a href="/tag/all.html">all</a>
+        /
+	<a href="/tag/php.html">php</a>
+        /
+	<a href="/tag/mysql.html">mysql</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id4">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#id2" id="id5">2&nbsp;&nbsp;&nbsp;问题</a></li>
+<li><a class="reference internal" href="#id3" id="id6">3&nbsp;&nbsp;&nbsp;做的事情</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id4">1&nbsp;&nbsp;&nbsp;主题</a></h2>
+<p>主要记录 <tt class="docutils literal">php与mysql在大小写转换上的区别</tt> 问题</p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id5">2&nbsp;&nbsp;&nbsp;问题</a></h2>
+<p>mysql的大写转小写函数( <tt class="docutils literal">lower</tt> ) 与 php的大写转小写函数( <tt class="docutils literal">mb_strtolower</tt> , <tt class="docutils literal">strtolower</tt> 这个很low，就不说了 )在大部分case上是一致的，但是存在一些例外</p>
+<p>case:</p>
+<pre class="literal-block">
+$str = &quot;High School D×DⅡ &quot;;
+
+echo mb_strtolower( $str, &quot;UTF-8&quot;) . &quot;\n&quot;;
+</pre>
+<p>php 的输出为:</p>
+<pre class="literal-block">
+high school d×dⅡ
+</pre>
+<p>而mysql的输出为:</p>
+<pre class="literal-block">
+high school d×dⅱ
+</pre>
+<p>当然 <tt class="docutils literal">小写转大写也是存在这个问题的</tt></p>
+<p>关于 <tt class="docutils literal">mb_strtolower</tt> 对某些特殊字符不转换为小写的问题，php 官网上也有人提出来过:</p>
+<pre class="literal-block">
+http://php.net/manual/en/function.mb-strtolower.php
+</pre>
+<p>在上面的讨论里，也说过 <tt class="docutils literal">mb_strtolower</tt> 要比 mysql的大写转小写函数( <tt class="docutils literal">lower</tt> ) 慢 -_-||</p>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id6">3&nbsp;&nbsp;&nbsp;做的事情</a></h2>
+<p>因为业务需求，需要保证两者的一致性，所以把mysql的大小写转换的代码( <tt class="docutils literal"><span class="pre">mysql-5.1.74</span></tt> )扣了出来，搞成一个php扩展，提供了额外的函数来实现目的</p>
+<p>case:</p>
+<pre class="literal-block">
+$str = &quot;High School D×DⅡ &quot;;
+
+$timeMB = microtime(true);
+$resMb = mb_strtolower( $str, &quot;UTF-8&quot;);
+$timeMB = microtime(true) - $timeMB;
+
+$timeSQL = microtime(true);
+$resSQL = strtolower_utf8_ext($str);
+$timeSQL = microtime(true) - $timeSQL;
+
+echo &quot;mbTime:&quot; . sprintf(&quot;%.5f&quot;,$timeMB).&quot; \n&quot;;
+echo &quot;sqlTime:&quot; . sprintf(&quot;%.5f&quot;,$timeSQL).&quot;\n&quot;;
+
+echo &quot;mbRes:&quot; . $resMb . &quot;\n&quot;;
+echo &quot;sqlRes:&quot; . $resSQL . &quot;\n&quot;;
+</pre>
+<p>result:</p>
+<pre class="literal-block">
+mbTime:0.00004
+sqlTime:0.00001
+mbRes:high school d×dⅡ
+sqlRes:high school d×dⅱ
+</pre>
+<p><tt class="docutils literal">性能差别case</tt></p>
+<pre class="literal-block">
+$str = &quot;High School D×DⅡ &quot;;
+
+$timeMB = microtime(true);
+for($i=0;$i&lt;30000;$i++)
+    $resMb = mb_strtolower( $str, &quot;UTF-8&quot;);
+$timeMB = microtime(true) - $timeMB;
+
+$timeSQL = microtime(true);
+for($i=0;$i&lt;30000;$i++)
+    $resSQL = strtolower_utf8_ext($str);
+$timeSQL = microtime(true) - $timeSQL;
+
+echo &quot;mbTime: &quot; . sprintf(&quot;%.5f&quot;,$timeMB).&quot; \n&quot;;
+echo &quot;sqlTime: &quot; . sprintf(&quot;%.5f&quot;,$timeSQL).&quot;\n&quot;;
+</pre>
+<p>result:</p>
+<pre class="literal-block">
+mbTime: 0.18481
+sqlTime: 0.01055
+</pre>
+<p>PS: 因为只取了一部分mysql的源码，所以注释了一部分东西 -_-||</p>
+<p>另外，发现在不同的php版本下注释的东西也不太一样</p>
+<p>php-5.4.24编译的好好的，到php-5.4.35下编译又会报错，根据编译错误提示注释掉 lib/m_string.h 里的某个函数就好了 -_-||</p>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>

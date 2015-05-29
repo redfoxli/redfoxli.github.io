@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>php-fpm-events - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="/php-fpm-events.html">
+
+        <meta name="author" content="lihongbin" />
+        <meta name="keywords" content="all,php,fpm" />
+        <meta name="description" content="Table of Contents 1   主题 2   涉及的源码 3   基本概念 3.1   fpm_event_s 3.2   fpm_event_queue_s 3.3   fpm_event_module_s 3.4   io复用模型的选择 3.5   io复用模型的wait操作 4   fpm_event相关操作 1   主题 从源码角度(php-5.5.20)来分析php-fpm的运行机制 fpm的源码在 sapi/fpm/fpm 下 本文主要介绍fpm的event机制 2   涉及的源码 sapi/fpm/fpm/fpm_events.c sapi/fpm/fpm/fpm_events ..." />
+
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="php-fpm-events"/>
+        <meta property="og:url" content="/php-fpm-events.html"/>
+        <meta property="og:description" content="Table of Contents 1   主题 2   涉及的源码 3   基本概念 3.1   fpm_event_s 3.2   fpm_event_queue_s 3.3   fpm_event_module_s 3.4   io复用模型的选择 3.5   io复用模型的wait操作 4   fpm_event相关操作 1   主题 从源码角度(php-5.5.20)来分析php-fpm的运行机制 fpm的源码在 sapi/fpm/fpm 下 本文主要介绍fpm的event机制 2   涉及的源码 sapi/fpm/fpm/fpm_events.c sapi/fpm/fpm/fpm_events ..."/>
+        <meta property="article:published_time" content="2015-03-30" />
+            <meta property="article:section" content="php" />
+            <meta property="article:tag" content="all" />
+            <meta property="article:tag" content="php" />
+            <meta property="article:tag" content="fpm" />
+            <meta property="article:author" content="lihongbin" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="/php-fpm-events.html"
+                       rel="bookmark"
+                       title="Permalink to php-fpm-events">
+                        php-fpm-events
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-03-30T23:40:55+08:00"> Mon 30 March 2015</time>
+    </span>
+            <span class="label label-default">Modified</span>
+            <span class="modified">
+                <i class="fa fa-calendar"></i><time datetime="2015-03-31T01:58:33+08:00"> Tue 31 March 2015</time>
+            </span>
+            <span class="label label-default">By</span>
+            <a href="/author/lihongbin.html"><i class="fa fa-user"></i> lihongbin</a>
+
+        <span class="label label-default">Category</span>
+        <a href="/category/php.html">php</a>
+
+
+<span class="label label-default">Tags</span>
+	<a href="/tag/all.html">all</a>
+        /
+	<a href="/tag/php.html">php</a>
+        /
+	<a href="/tag/fpm.html">fpm</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id4">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#id2" id="id5">2&nbsp;&nbsp;&nbsp;涉及的源码</a></li>
+<li><a class="reference internal" href="#id3" id="id6">3&nbsp;&nbsp;&nbsp;基本概念</a><ul class="auto-toc">
+<li><a class="reference internal" href="#fpm-event-s" id="id7">3.1&nbsp;&nbsp;&nbsp;fpm_event_s</a></li>
+<li><a class="reference internal" href="#fpm-event-queue-s" id="id8">3.2&nbsp;&nbsp;&nbsp;fpm_event_queue_s</a></li>
+<li><a class="reference internal" href="#fpm-event-module-s" id="id9">3.3&nbsp;&nbsp;&nbsp;fpm_event_module_s</a></li>
+<li><a class="reference internal" href="#io" id="id10">3.4&nbsp;&nbsp;&nbsp;io复用模型的选择</a></li>
+<li><a class="reference internal" href="#iowait" id="id11">3.5&nbsp;&nbsp;&nbsp;io复用模型的wait操作</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fpm-event" id="id12">4&nbsp;&nbsp;&nbsp;fpm_event相关操作</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id4">1&nbsp;&nbsp;&nbsp;主题</a></h2>
+<p>从源码角度(<tt class="docutils literal"><span class="pre">php-5.5.20</span></tt>)来分析php-fpm的运行机制</p>
+<p>fpm的源码在 <tt class="docutils literal">sapi/fpm/fpm</tt> 下</p>
+<p><strong>本文主要介绍fpm的event机制</strong></p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id5">2&nbsp;&nbsp;&nbsp;涉及的源码</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_events.c</tt></li>
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_events.h</tt></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id6">3&nbsp;&nbsp;&nbsp;基本概念</a></h2>
+<p>我们先来看看.h文件</p>
+<div class="section" id="fpm-event-s">
+<h3><a class="toc-backref" href="#id7">3.1&nbsp;&nbsp;&nbsp;fpm_event_s</a></h3>
+<p>定义了一个event事件，例如 <tt class="docutils literal">socket事件</tt> 或者 <tt class="docutils literal">定时任务事件</tt></p>
+<div class="highlight"><pre><span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>                   <span class="c1">// not set with FPM_EV_TIMEOUT，当为定时器的时候，被设置为-1</span>
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">timeout</span><span class="p">;</span>   <span class="c1">// next time to trigger，下次触发时间</span>
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">frequency</span><span class="p">;</span> <span class="c1">//定时器的周期</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span> <span class="n">callback</span><span class="p">)(</span><span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span> <span class="p">);</span> <span class="c1">// event时间的回调函数</span>
+    <span class="kt">void</span> <span class="o">*</span> <span class="n">arg</span><span class="p">;</span> <span class="c1">// 回调函数的参数</span>
+    <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span> <span class="c1">// FPM_EV_READ(socket事件) or FPM_EV_PERSIST(定时器)</span>
+    <span class="kt">int</span> <span class="n">index</span><span class="p">;</span>                <span class="c1">// index of the fd in the ufds array</span>
+    <span class="kt">short</span> <span class="n">which</span><span class="p">;</span>              <span class="c1">// type of event，当flags拥有FPM_EV_READ标记的时候，取值为FPM_EV_READ，否则为FPM_EV_TIMEOUT，表示定时器</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<div class="section" id="fpm-event-queue-s">
+<h3><a class="toc-backref" href="#id8">3.2&nbsp;&nbsp;&nbsp;fpm_event_queue_s</a></h3>
+<p>用链表表示event事件集合，这里有两个事件集合，两者没有交集</p>
+<ul class="simple">
+<li><tt class="docutils literal">fpm_event_queue_fd</tt> : 表示socket事件的链表集合</li>
+<li><tt class="docutils literal">fpm_event_queue_timer</tt> : 表示定时器任务事件的链表集合</li>
+</ul>
+<div class="highlight"><pre><span class="k">typedef</span> <span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="o">*</span> <span class="n">prev</span><span class="p">;</span>                                     <span class="c1">//指向前一个节点</span>
+    <span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="o">*</span> <span class="n">next</span><span class="p">;</span>                                     <span class="c1">//指向后一个节点</span>
+    <span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="n">ev</span><span class="p">;</span>                                             <span class="c1">//指向一个event事件</span>
+<span class="p">}</span> <span class="n">fpm_event_queue</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="section" id="fpm-event-module-s">
+<h3><a class="toc-backref" href="#id9">3.3&nbsp;&nbsp;&nbsp;fpm_event_module_s</a></h3>
+<p>主要是基于各种io复用模型封装了统一的接口，底层使用select or epoll等等模型，对上层是透明的
+用户可以根据具体的环境选择合适的io复用模型，主要是给socket事件使用的</p>
+<div class="highlight"><pre><span class="k">struct</span> <span class="n">fpm_event_module_s</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">name</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">support_edge_trigger</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span> <span class="n">init</span><span class="p">)(</span><span class="kt">int</span> <span class="n">max_fd</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span> <span class="n">clean</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span> <span class="n">wait</span><span class="p">)(</span><span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="o">*</span> <span class="n">queue</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span> <span class="n">add</span><span class="p">)(</span><span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="n">ev</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span> <span class="n">remove</span><span class="p">)(</span><span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="n">ev</span><span class="p">);</span>
+<span class="p">};</span>
+</pre></div>
+<p>fpm提供了例如 <tt class="docutils literal">devpoll</tt>  <tt class="docutils literal">epoll</tt> <tt class="docutils literal">kqueue</tt> <tt class="docutils literal">poll</tt> <tt class="docutils literal">port</tt> <tt class="docutils literal">select</tt> 这几种io复用的模型，代码在 <tt class="docutils literal">sapi/fpm/fpm/events/</tt> 下</p>
+</div>
+<div class="section" id="io">
+<h3><a class="toc-backref" href="#id10">3.4&nbsp;&nbsp;&nbsp;io复用模型的选择</a></h3>
+<p>每个io复用的模型(例如以下的epoll)会提供基于 fpm_event_module_s 结构体的赋值</p>
+<div class="highlight"><pre><span class="k">static</span> <span class="k">struct</span> <span class="n">fpm_event_module_s</span> <span class="n">epoll_module</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;epoll&quot;</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">support_edge_trigger</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">init</span> <span class="o">=</span> <span class="n">fpm_event_epoll_init</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">clean</span> <span class="o">=</span> <span class="n">fpm_event_epoll_clean</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">wait</span> <span class="o">=</span> <span class="n">fpm_event_epoll_wait</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">add</span> <span class="o">=</span> <span class="n">fpm_event_epoll_add</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">remove</span> <span class="o">=</span> <span class="n">fpm_event_epoll_remove</span><span class="p">,</span>
+<span class="p">};</span>
+
+
+<span class="k">struct</span> <span class="n">fpm_event_module_s</span> <span class="o">*</span> <span class="nf">fpm_event_epoll_module</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="cp">#if HAVE_EPOLL</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="n">epoll_module</span><span class="p">;</span>
+<span class="cp">#else</span>
+    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="cp">#endif </span><span class="c1">// HAVE_EPOLL</span>
+<span class="p">}</span>
+</pre></div>
+<p>然后在 <tt class="docutils literal">fpm_event_pre_init</tt> 函数里会根据 <tt class="docutils literal">配置文件里的machanism参数</tt> 选择对应的模型</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">fpm_event_pre_init</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span> <span class="n">machanism</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//...........</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">fpm_event_epoll_module</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">machanism</span> <span class="o">||</span> <span class="n">strcasecmp</span><span class="p">(</span><span class="n">module</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="n">machanism</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">//.............</span>
+<span class="p">}</span>
+</pre></div>
+<p>fpm_event_pre_init 的调用是在读取配置文件的时候，调用的路径如下:</p>
+<pre class="literal-block">
+main() -&gt; fpm_init() -&gt; fpm_conf_init_main() -&gt; fpm_conf_post_process() -&gt; fpm_event_pre_init()
+</pre>
+</div>
+<div class="section" id="iowait">
+<h3><a class="toc-backref" href="#id11">3.5&nbsp;&nbsp;&nbsp;io复用模型的wait操作</a></h3>
+<p>正常io复用的wait操作会返回一系列的fd集合，然后根据这些fd集合进行处理</p>
+<p>不过fpm把这两个操作都放在wait函数里了，这个写法感觉有点耦合了</p>
+<p>以 <tt class="docutils literal">epoll</tt> 的 <tt class="docutils literal">wait</tt> 函数为例子</p>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="nf">fpm_event_epoll_wait</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="o">*</span> <span class="n">queue</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">ret</span><span class="p">,</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="c1">// ensure we have a clean epoolfds before calling epoll_wait()</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">epollfds</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">epoll_event</span><span class="p">)</span> <span class="o">*</span> <span class="n">nepollfds</span><span class="p">);</span>
+
+    <span class="c1">// wait for inconming event or timeout</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">epoll_wait</span><span class="p">(</span><span class="n">epollfd</span><span class="p">,</span> <span class="n">epollfds</span><span class="p">,</span> <span class="n">nepollfds</span><span class="p">,</span> <span class="n">timeout</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="c1">// trigger error unless signal interrupt</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;epoll_wait() returns %d&quot;</span><span class="p">,</span> <span class="n">errno</span><span class="p">);</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// events have been triggered, let&#39;s fire them</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ret</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+
+        <span class="c1">// do we have a valid ev ptr ?</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">epollfds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// fire the event</span>
+        <span class="c1">//static int fpm_event_epoll_add(struct fpm_event_s * ev)</span>
+        <span class="c1">//{</span>
+        <span class="c1">//    struct epoll_event e;</span>
+        <span class="c1">//</span>
+        <span class="c1">//    e.events = EPOLLIN;</span>
+        <span class="c1">//    e.data.fd = ev-&gt;fd;</span>
+        <span class="c1">//    e.data.ptr = (void * )ev;</span>
+        <span class="c1">//    //............................</span>
+        <span class="c1">//}</span>
+
+        <span class="n">fpm_event_fire</span><span class="p">((</span><span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="p">)</span><span class="n">epollfds</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span><span class="p">);</span><span class="c1">//执行event的设置的回调函数</span>
+
+        <span class="c1">//void fpm_event_fire(struct fpm_event_s * ev)</span>
+        <span class="c1">//{</span>
+        <span class="c1">//     (* ev-&gt;callback)( (struct fpm_event_s * ) ev, ev-&gt;which, ev-&gt;arg);</span>
+        <span class="c1">//}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fpm-event">
+<h2><a class="toc-backref" href="#id12">4&nbsp;&nbsp;&nbsp;fpm_event相关操作</a></h2>
+<p>fpm event最主要的操作也就是fpm主进程一直在做的循环监听事件，在之前的php-fpm-framework里已经介绍过了</p>
+<p>循环监控以下三件事情</p>
+<ul class="simple">
+<li>由信号触发的socket事件，信号事件来自外部的信号或者子进程的信号</li>
+<li>监控慢请求以及子进程执行超时</li>
+<li>当fpm的pm为PM_STYLE_DYNAMIC，是否需要kill掉不需要的子进程</li>
+</ul>
+<p>其中分成两个部分，第一个部分是设置event事件</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_event_loop</span><span class="p">(</span><span class="kt">int</span> <span class="n">err</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="n">signal_fd_event</span><span class="p">;</span>
+
+
+    <span class="c1">//设置socket事件的回调函数，fpm_signals_get_fd() 就是 sp[0]</span>
+    <span class="c1">//socketpair 创建出sp[0] 以及 sp[1]这对socket</span>
+    <span class="c1">//当主进程收到信号事件后，在回调函数sig_handler里会向sp[1]里写一个标记</span>
+    <span class="c1">//从sp[0]里读出这个标记，由回调函数fpm_got_signal进行处理</span>
+    <span class="c1">//这样就把信号事件转换为socket事件了</span>
+    <span class="n">fpm_event_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_fd_event</span><span class="p">,</span> <span class="n">fpm_signals_get_fd</span><span class="p">(),</span> <span class="n">FPM_EV_READ</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fpm_got_signal</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span><span class="c1">//fpm_got_signal是信号回调函数，在接下来信号那篇介绍</span>
+    <span class="n">fpm_event_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_fd_event</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span><span class="c1">//在fpm_event_add里发现是FPM_EV_READ类型的话，加到fpm_event_queue_fd集合里</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">heartbeat</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fpm_pctl_heartbeat</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span><span class="c1">//设置定时器对slow log以及子进程执行超时的监控</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fpm_pctl_perform_idle_server_maintenance_heartbeat</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span><span class="c1">//当fpm的pm为PM_STYLE_DYNAMIC，设置定时器监控是否需要kill掉不需要的子进程</span>
+<span class="cp">#ifdef HAVE_SYSTEMD</span>
+        <span class="n">fpm_systemd_heartbeat</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="cp">#endif</span>
+    <span class="p">}</span>
+    <span class="c1">//........................</span>
+<span class="p">}</span>
+</pre></div>
+<p>第二部分是执行由信号触发的socket事件以及定时任务</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_event_loop</span><span class="p">(</span><span class="kt">int</span> <span class="n">err</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//....................设置各种event事件</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// search in the timeout queue for the next timer to trigger</span>
+        <span class="c1">//遍历fpm_event_queue_timer 这个定时器列表，找到最近的超时时间</span>
+        <span class="c1">//.................</span>
+
+        <span class="c1">//在wait里，对处理由信号触发的socket事件，主要是调用 fpm_got_signal 这个回调函数</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">module</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="n">fpm_event_queue_fd</span><span class="p">,</span> <span class="n">timeout</span><span class="p">);</span>
+
+        <span class="c1">//..............</span>
+
+        <span class="c1">//遍历定时器链表，寻找需要处理的事件</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">fpm_event_queue_timer</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">fpm_clock_get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">,</span> <span class="o">&gt;</span><span class="p">)</span> <span class="o">||</span> <span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">,</span> <span class="o">==</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="n">fpm_event_fire</span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="p">);</span><span class="c1">//处理设置好的回调函数，比如 fpm_pctl_check_request_timeout</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">parent_pid</span> <span class="o">!=</span> <span class="n">getpid</span><span class="p">())</span> <span class="p">{</span>
+                        <span class="k">return</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">FPM_EV_PERSIST</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">fpm_event_set_timeout</span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="p">,</span> <span class="n">now</span><span class="p">);</span><span class="c1">//重置下次的超时时间</span>
+                    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// delete the event，非永久性的定时器，则删除</span>
+                        <span class="c1">//....................</span>
+                        <span class="k">continue</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>

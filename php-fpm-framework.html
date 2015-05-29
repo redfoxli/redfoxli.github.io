@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>php-fpm-framework - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="/php-fpm-framework.html">
+
+        <meta name="author" content="lihongbin" />
+        <meta name="keywords" content="all,php,fpm" />
+        <meta name="description" content="Table of Contents 1   主题 2   整体框架 3   fpm主进程 3.1   主进程初始化 3.2   创建子进程 3.3   主进程主逻辑 4   子进程 4.1   子进程的创建 4.2   子进程的初始化 4.3   子进程主逻辑 5   总结 1   主题 从源码角度(php-5.5.20)来分析php-fpm的运行机制 fpm的源码在 sapi/fpm/fpm 下 本文主要介绍fpm的主体运行框架，主进程与子进程的主逻辑 2   整体框架 fpm的代码入口在 sapi/fpm ..." />
+
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="php-fpm-framework"/>
+        <meta property="og:url" content="/php-fpm-framework.html"/>
+        <meta property="og:description" content="Table of Contents 1   主题 2   整体框架 3   fpm主进程 3.1   主进程初始化 3.2   创建子进程 3.3   主进程主逻辑 4   子进程 4.1   子进程的创建 4.2   子进程的初始化 4.3   子进程主逻辑 5   总结 1   主题 从源码角度(php-5.5.20)来分析php-fpm的运行机制 fpm的源码在 sapi/fpm/fpm 下 本文主要介绍fpm的主体运行框架，主进程与子进程的主逻辑 2   整体框架 fpm的代码入口在 sapi/fpm ..."/>
+        <meta property="article:published_time" content="2015-03-23" />
+            <meta property="article:section" content="php" />
+            <meta property="article:tag" content="all" />
+            <meta property="article:tag" content="php" />
+            <meta property="article:tag" content="fpm" />
+            <meta property="article:author" content="lihongbin" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="/php-fpm-framework.html"
+                       rel="bookmark"
+                       title="Permalink to php-fpm-framework">
+                        php-fpm-framework
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-03-23T23:26:37+08:00"> Mon 23 March 2015</time>
+    </span>
+            <span class="label label-default">Modified</span>
+            <span class="modified">
+                <i class="fa fa-calendar"></i><time datetime="2015-03-30T21:49:52+08:00"> Mon 30 March 2015</time>
+            </span>
+            <span class="label label-default">By</span>
+            <a href="/author/lihongbin.html"><i class="fa fa-user"></i> lihongbin</a>
+
+        <span class="label label-default">Category</span>
+        <a href="/category/php.html">php</a>
+
+
+<span class="label label-default">Tags</span>
+	<a href="/tag/all.html">all</a>
+        /
+	<a href="/tag/php.html">php</a>
+        /
+	<a href="/tag/fpm.html">fpm</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id11">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#id2" id="id12">2&nbsp;&nbsp;&nbsp;整体框架</a></li>
+<li><a class="reference internal" href="#fpm" id="id13">3&nbsp;&nbsp;&nbsp;fpm主进程</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id3" id="id14">3.1&nbsp;&nbsp;&nbsp;主进程初始化</a></li>
+<li><a class="reference internal" href="#id4" id="id15">3.2&nbsp;&nbsp;&nbsp;创建子进程</a></li>
+<li><a class="reference internal" href="#id5" id="id16">3.3&nbsp;&nbsp;&nbsp;主进程主逻辑</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6" id="id17">4&nbsp;&nbsp;&nbsp;子进程</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id7" id="id18">4.1&nbsp;&nbsp;&nbsp;子进程的创建</a></li>
+<li><a class="reference internal" href="#id8" id="id19">4.2&nbsp;&nbsp;&nbsp;子进程的初始化</a></li>
+<li><a class="reference internal" href="#id9" id="id20">4.3&nbsp;&nbsp;&nbsp;子进程主逻辑</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10" id="id21">5&nbsp;&nbsp;&nbsp;总结</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id11">1&nbsp;&nbsp;&nbsp;主题</a></h2>
+<p>从源码角度(<tt class="docutils literal"><span class="pre">php-5.5.20</span></tt>)来分析php-fpm的运行机制</p>
+<p>fpm的源码在 <tt class="docutils literal">sapi/fpm/fpm</tt> 下</p>
+<p><strong>本文主要介绍fpm的主体运行框架，主进程与子进程的主逻辑</strong></p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id12">2&nbsp;&nbsp;&nbsp;整体框架</a></h2>
+<p>fpm的代码入口在 <tt class="docutils literal">sapi/fpm/fpm/fpm_main.c</tt></p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="n">sapi_startup</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cgi_sapi_module</span><span class="p">);</span>
+
+    <span class="c1">//获取参数，例如是否指定了php.ini之类的....</span>
+    <span class="k">while</span> <span class="p">((</span><span class="n">c</span> <span class="o">=</span> <span class="n">php_getopt</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="n">OPTIONS</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">php_optarg</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">php_optind</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">cgi_sapi_module</span><span class="p">.</span><span class="n">startup</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cgi_sapi_module</span><span class="p">)</span> <span class="o">==</span> <span class="n">FAILURE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="n">FPM_EXIT_SOFTWARE</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">//初始化fpm</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_init</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="n">fpm_config</span> <span class="o">?</span> <span class="nl">fpm_config</span> <span class="p">:</span> <span class="n">CGIG</span><span class="p">(</span><span class="n">fpm_config</span><span class="p">),</span> <span class="n">fpm_prefix</span><span class="p">,</span>
+                <span class="n">fpm_pid</span><span class="p">,</span> <span class="n">test_conf</span><span class="p">,</span> <span class="n">php_allow_to_run_as_root</span><span class="p">,</span> <span class="n">force_daemon</span><span class="p">))</span> <span class="p">{</span>
+        <span class="c1">//...............</span>
+    <span class="p">}</span>
+
+    <span class="c1">//fpm主进程向它的父进程发消息</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">send_config_pipe</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">writeval</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_DEBUG</span><span class="p">,</span> <span class="s">&quot;Sending </span><span class="se">\&quot;</span><span class="s">1</span><span class="se">\&quot;</span><span class="s"> (OK) to parent via fd=%d&quot;</span><span class="p">,</span> <span class="n">fpm_globals</span><span class="p">.</span><span class="n">send_config_pipe</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+        <span class="n">write</span><span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">send_config_pipe</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">writeval</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">writeval</span><span class="p">));</span>
+        <span class="n">close</span><span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">send_config_pipe</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+    <span class="p">}</span>
+
+    <span class="c1">//fpm主进程将在fpm_run中死循环接受子进程的信号，然后处理</span>
+    <span class="n">fcgi_fd</span> <span class="o">=</span> <span class="n">fpm_run</span><span class="p">(</span><span class="o">&amp;</span><span class="n">max_requests</span><span class="p">);</span>
+
+    <span class="c1">//下面的是子进程的处理逻辑</span>
+    <span class="n">zend_first_try</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">fcgi_accept_request</span><span class="p">(</span><span class="o">&amp;</span><span class="n">request</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//子进程accept client的请求，加锁竞争fd</span>
+            <span class="n">php_execute_script</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span> <span class="n">TSRMLS_CC</span><span class="p">);</span> <span class="c1">//由zend引擎来执行php代码</span>
+
+            <span class="n">fpm_log_write</span><span class="p">(</span><span class="nb">NULL</span> <span class="n">TSRMLS_CC</span><span class="p">);</span><span class="c1">//打印fpm access log</span>
+
+            <span class="n">php_request_shutdown</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span> <span class="p">)</span> <span class="mi">0</span><span class="p">);</span><span class="c1">//做了十几项收尾工作</span>
+
+            <span class="c1">//如果一个子进程达到运行的最大次数，则需要退出，由主进程重新fork进程接受请求</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">max_requests</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">requests</span> <span class="o">==</span> <span class="n">max_requests</span><span class="p">))</span> <span class="p">{</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">fcgi_shutdown</span><span class="p">();</span>
+
+    <span class="p">}</span> <span class="n">zend_catch</span> <span class="p">{</span>
+        <span class="n">exit_status</span> <span class="o">=</span> <span class="n">FPM_EXIT_SOFTWARE</span><span class="p">;</span>
+    <span class="p">}</span> <span class="n">zend_end_try</span><span class="p">();</span>
+
+    <span class="k">return</span> <span class="n">exit_status</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="fpm">
+<h2><a class="toc-backref" href="#id13">3&nbsp;&nbsp;&nbsp;fpm主进程</a></h2>
+<p>fpm的主进程调用fpm_init进行初始化，然后在fpm_run里fork子进程后，不断 <tt class="docutils literal">监听信号事件产生的socket事件</tt> 以及 <tt class="docutils literal">执行定时任务</tt></p>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id14">3.1&nbsp;&nbsp;&nbsp;主进程初始化</a></h3>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">fpm_init</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">config</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">prefix</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">pid</span><span class="p">,</span> <span class="kt">int</span> <span class="n">test_conf</span><span class="p">,</span> <span class="kt">int</span> <span class="n">run_as_root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">force_daemon</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">fpm_globals</span><span class="p">.</span><span class="n">argc</span> <span class="o">=</span> <span class="n">argc</span><span class="p">;</span>
+    <span class="n">fpm_globals</span><span class="p">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">argv</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">config</span> <span class="o">&amp;&amp;</span> <span class="o">*</span> <span class="n">config</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fpm_globals</span><span class="p">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">strdup</span><span class="p">(</span><span class="n">config</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">fpm_globals</span><span class="p">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="p">;</span>
+    <span class="n">fpm_globals</span><span class="p">.</span><span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span><span class="p">;</span>
+    <span class="n">fpm_globals</span><span class="p">.</span><span class="n">run_as_root</span> <span class="o">=</span> <span class="n">run_as_root</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_php_init_main</span><span class="p">()</span>           <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_stdio_init_main</span><span class="p">()</span>         <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_conf_init_main</span><span class="p">(</span><span class="n">test_conf</span><span class="p">,</span> <span class="n">force_daemon</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_unix_init_main</span><span class="p">()</span>          <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_scoreboard_init_main</span><span class="p">()</span>    <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_pctl_init_main</span><span class="p">()</span>          <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_env_init_main</span><span class="p">()</span>           <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_signals_init_main</span><span class="p">()</span>       <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_children_init_main</span><span class="p">()</span>      <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_sockets_init_main</span><span class="p">()</span>       <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_worker_pool_init_main</span><span class="p">()</span>   <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_event_init_main</span><span class="p">())</span> <span class="p">{</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">test_successful</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">exit</span><span class="p">(</span><span class="n">FPM_EXIT_OK</span><span class="p">);</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_ERROR</span><span class="p">,</span> <span class="s">&quot;FPM initialization failed&quot;</span><span class="p">);</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_conf_write_pid</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_ERROR</span><span class="p">,</span> <span class="s">&quot;FPM initialization failed&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">fpm_stdio_init_final</span><span class="p">();</span>
+    <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;fpm is running, pid %d&quot;</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">fpm_globals</span><span class="p">.</span><span class="n">parent_pid</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>主要有以下几个工作</p>
+<ul class="simple">
+<li>fpm_php_init_main : 主要是 <tt class="docutils literal">注册了一个回调函数</tt> ，用于清理工作</li>
+<li>fpm_stdio_init_main : 主要是 <tt class="docutils literal">标准输入输出重定向到空设备</tt> ，为 <tt class="docutils literal">fpm的主进程成为守护进程做准备</tt></li>
+<li>fpm_conf_init_main  : 主要是加载fpm的配置文件, <tt class="docutils literal">解析文件，检查配置的合法性</tt>, event模型也是在这里面初始化的</li>
+<li>fpm_unix_init_main  : 主要是让fpm的主进程成为守护进程</li>
+<li>fpm_scoreboard_init_main : 主要是为每个pool里的每个子进程建立状态榜，使用共享内存方式进行状态的获取</li>
+<li>fpm_pctl_init_main : 要是保存启动的参数，用于后续的进程控制，比如reload的时候需要这些参数</li>
+<li>fpm_env_init_main  : 要是通过调整argv，来达到 <tt class="docutils literal">修改fpm主进程的名字</tt></li>
+<li>fpm_signals_init_main : 设置fpm <tt class="docutils literal">主进程信号相关的回调函数</tt></li>
+<li>fpm_children_init_main : 主要是为了实现紧急重启功能而申请一块内存，记录子进程非正常(<tt class="docutils literal">SIGSEGV or SIGBUS</tt>)退出的时间队列</li>
+<li>fpm_sockets_init_main : 为每个pool <tt class="docutils literal">建立监听的socket</tt> , <tt class="docutils literal">复用之前fpm主进程的fd</tt> ，这种情况发生在例如 <tt class="docutils literal">reload</tt> 的情况下，即 <tt class="docutils literal">SIGUSR2</tt> 信号</li>
+<li>fpm_worker_pool_init_main : 设置了一个回调函数，释放例如在fpm_scoreboard_init_main函数里申请的内存</li>
+<li>fpm_event_init_main : fpm主进程event事件监控初始化</li>
+<li>fpm_conf_write_pid : 写fpm主进程的pid</li>
+</ul>
+<p>其中最重要的就是 <tt class="docutils literal">fpm_signals_init_main</tt> ， <tt class="docutils literal">把信号事件转换为socket事件来通知fpm主进程</tt></p>
+</div>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id15">3.2&nbsp;&nbsp;&nbsp;创建子进程</a></h3>
+<p>fpm的主进程将变量每个pool，fork出需要的子进程数量
+fork出来的子进程将返回main函数，加锁accept client的请求
+而主进程将在fpm_event_loop里环处理由信号产生的socket事件以及定时任务</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">fpm_run</span><span class="p">(</span><span class="kt">int</span><span class="o">*</span> <span class="n">max_requests</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">fpm_worker_pool_s</span><span class="o">*</span> <span class="n">wp</span><span class="p">;</span>
+
+    <span class="c1">// create initial children in all pools</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">wp</span> <span class="o">=</span> <span class="n">fpm_worker_all_pools</span><span class="p">;</span> <span class="n">wp</span><span class="p">;</span> <span class="n">wp</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">is_parent</span><span class="p">;</span>
+
+        <span class="n">is_parent</span> <span class="o">=</span> <span class="n">fpm_children_create_initial</span><span class="p">(</span><span class="n">wp</span><span class="p">);</span><span class="c1">//fork子进程</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">is_parent</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">goto</span> <span class="n">run_child</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// handle error</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">is_parent</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">fpm_pctl</span><span class="p">(</span><span class="n">FPM_PCTL_STATE_TERMINATING</span><span class="p">,</span> <span class="n">FPM_PCTL_ACTION_SET</span><span class="p">);</span>
+            <span class="n">fpm_event_loop</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// run event loop forever</span>
+    <span class="n">fpm_event_loop</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="c1">//fpm主进程将在这个函数里循环处理由信号产生的socket事件以及定时任务</span>
+
+<span class="nl">run_child</span><span class="p">:</span> <span class="c1">// only workers reach this point</span>
+
+    <span class="n">fpm_cleanups_run</span><span class="p">(</span><span class="n">FPM_CLEANUP_CHILD</span><span class="p">);</span>
+
+    <span class="o">*</span> <span class="n">max_requests</span> <span class="o">=</span> <span class="n">fpm_globals</span><span class="p">.</span><span class="n">max_requests</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">fpm_globals</span><span class="p">.</span><span class="n">listening_socket</span><span class="p">;</span><span class="c1">//子进程返回main函数，加锁accept client的请求</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id5">
+<h3><a class="toc-backref" href="#id16">3.3&nbsp;&nbsp;&nbsp;主进程主逻辑</a></h3>
+<p>循环监控以下三件事情</p>
+<ul class="simple">
+<li>由信号触发的socket事件，信号事件来自外部的信号或者子进程的信号</li>
+<li>监控慢请求以及子进程执行超时</li>
+<li>当fpm的pm为PM_STYLE_DYNAMIC，是否需要kill掉不需要的子进程</li>
+</ul>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_event_loop</span><span class="p">(</span><span class="kt">int</span> <span class="n">err</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="n">signal_fd_event</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">parent_pid</span> <span class="o">!=</span> <span class="n">getpid</span><span class="p">())</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">//设置socket事件的回调函数，fpm_signals_get_fd() 就是 sp[0]</span>
+    <span class="c1">//socketpair 创建出sp[0] 以及 sp[1]这对socket</span>
+    <span class="c1">//当主进程收到信号事件后，在回调函数sig_handler里会向sp[1]里写一个标记</span>
+    <span class="c1">//从sp[0]里读出这个标记，由回调函数fpm_got_signal进行处理</span>
+    <span class="c1">//这样就把信号事件转换为socket事件了</span>
+    <span class="n">fpm_event_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_fd_event</span><span class="p">,</span> <span class="n">fpm_signals_get_fd</span><span class="p">(),</span> <span class="n">FPM_EV_READ</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fpm_got_signal</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">fpm_event_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_fd_event</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">heartbeat</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fpm_pctl_heartbeat</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span><span class="c1">//设置定时器对slow log以及子进程执行超时的监控</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">err</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fpm_pctl_perform_idle_server_maintenance_heartbeat</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span><span class="c1">//当fpm的pm为PM_STYLE_DYNAMIC，设置定时器监控是否需要kill掉不需要的子进程</span>
+
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_DEBUG</span><span class="p">,</span> <span class="s">&quot;%zu bytes have been reserved in SHM&quot;</span><span class="p">,</span> <span class="n">fpm_shm_get_size_allocated</span><span class="p">());</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;ready to handle connections&quot;</span><span class="p">);</span>
+
+<span class="cp">#ifdef HAVE_SYSTEMD</span>
+        <span class="n">fpm_systemd_heartbeat</span><span class="p">(</span><span class="nb">NULL</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="cp">#endif</span>
+    <span class="p">}</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span> <span class="o">*</span> <span class="n">q2</span><span class="p">;</span>
+        <span class="k">struct</span> <span class="n">timeval</span> <span class="n">ms</span><span class="p">;</span>
+        <span class="k">struct</span> <span class="n">timeval</span> <span class="n">tmp</span><span class="p">;</span>
+        <span class="k">struct</span> <span class="n">timeval</span> <span class="n">now</span><span class="p">;</span>
+        <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">int</span> <span class="n">timeout</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">parent_pid</span> <span class="o">!=</span> <span class="n">getpid</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">fpm_clock_get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">);</span>
+        <span class="n">timerclear</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">);</span>
+
+        <span class="c1">//遍历fpm_event_queue_timer 这个定时器列表，找到最近的超时时间</span>
+        <span class="c1">// search in the timeout queue for the next timer to trigger</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">fpm_event_queue_timer</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">timerisset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">))</span> <span class="p">{</span>
+                <span class="n">ms</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">;</span>
+            <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span> <span class="o">&lt;</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="n">ms</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">//如果没有找到，或者最近的超时时间已经过了，则设置为1000ms</span>
+        <span class="c1">// 1s timeout if none has been set</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">timerisset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">)</span> <span class="o">||</span> <span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">&lt;</span><span class="p">)</span> <span class="o">||</span> <span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">==</span><span class="p">))</span> <span class="p">{</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">timersub</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ms</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tmp</span><span class="p">);</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="p">(</span><span class="n">tmp</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">tmp</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">//在wait里，对处理由信号触发的socket事件，主要是调用 fpm_got_signal 这个回调函数</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">module</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="n">fpm_event_queue_fd</span><span class="p">,</span> <span class="n">timeout</span><span class="p">);</span>
+
+        <span class="c1">// is a child, nothing to do here</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_DEBUG</span><span class="p">,</span> <span class="s">&quot;event module triggered %d events&quot;</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">//遍历定时器链表，寻找需要处理的事件</span>
+        <span class="c1">// trigger timers</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">fpm_event_queue_timer</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">fpm_clock_get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">,</span> <span class="o">&gt;</span><span class="p">)</span> <span class="o">||</span> <span class="n">timercmp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">timeout</span><span class="p">,</span> <span class="o">==</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="n">fpm_event_fire</span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="p">);</span><span class="c1">//处理设置好的回调函数，比如 fpm_pctl_check_request_timeout</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">parent_pid</span> <span class="o">!=</span> <span class="n">getpid</span><span class="p">())</span> <span class="p">{</span>
+                        <span class="k">return</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">FPM_EV_PERSIST</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">fpm_event_set_timeout</span><span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">ev</span><span class="p">,</span> <span class="n">now</span><span class="p">);</span><span class="c1">//重置下次的超时时间</span>
+                    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// delete the event，非永久性的定时器，则删除</span>
+                        <span class="n">q2</span> <span class="o">=</span> <span class="n">q</span><span class="p">;</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="n">q</span><span class="o">-&gt;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+                        <span class="p">}</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+                        <span class="p">}</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">q</span> <span class="o">==</span> <span class="n">fpm_event_queue_timer</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="n">fpm_event_queue_timer</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+                            <span class="k">if</span> <span class="p">(</span><span class="n">fpm_event_queue_timer</span><span class="p">)</span> <span class="p">{</span>
+                                <span class="n">fpm_event_queue_timer</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                        <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+                        <span class="n">free</span><span class="p">(</span><span class="n">q2</span><span class="p">);</span>
+                        <span class="k">continue</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2><a class="toc-backref" href="#id17">4&nbsp;&nbsp;&nbsp;子进程</a></h2>
+<div class="section" id="id7">
+<h3><a class="toc-backref" href="#id18">4.1&nbsp;&nbsp;&nbsp;子进程的创建</a></h3>
+<p>在fpm_run里会调用fpm_children_create_initial进行fork子进程，接下来就看看子进程的创建过程</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">fpm_children_create_initial</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_worker_pool_s</span> <span class="o">*</span> <span class="n">wp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">pm</span> <span class="o">==</span> <span class="n">PM_STYLE_ONDEMAND</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//.............</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">fpm_children_make</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="mi">0</span> <span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">fpm_children_make</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_worker_pool_s</span><span class="o">*</span> <span class="n">wp</span><span class="p">,</span> <span class="kt">int</span> <span class="n">in_event_loop</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nb_to_spawn</span><span class="p">,</span> <span class="kt">int</span> <span class="n">is_debug</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">pid_t</span> <span class="n">pid</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">fpm_child_s</span><span class="o">*</span> <span class="n">child</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">max</span><span class="p">;</span>
+    <span class="k">static</span> <span class="kt">int</span> <span class="n">warned</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">pm</span> <span class="o">==</span> <span class="n">PM_STYLE_DYNAMIC</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_event_loop</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// starting</span>
+            <span class="n">max</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">pm_start_servers</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">max</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">running_children</span> <span class="o">+</span> <span class="n">nb_to_spawn</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">pm</span> <span class="o">==</span> <span class="n">PM_STYLE_ONDEMAND</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">in_event_loop</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// starting</span>
+            <span class="n">max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// do not create any child at startup</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">max</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">running_children</span> <span class="o">+</span> <span class="n">nb_to_spawn</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">// PM_STYLE_STATIC</span>
+        <span class="n">max</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">pm_max_children</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// fork children while:</span>
+    <span class="c1">//   - fpm_pctl_can_spawn_children : FPM is running in a NORMAL state (aka not restart, stop or reload)</span>
+    <span class="c1">//   - wp-&gt;running_children &lt; max  : there is less than the max process for the current pool</span>
+    <span class="c1">//   - (fpm_global_config.process_max &lt; 1 || fpm_globals.running_children &lt; fpm_global_config.process_max):</span>
+    <span class="c1">//     if fpm_global_config.process_max is set, FPM has not fork this number of processes (globaly)</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">fpm_pctl_can_spawn_children</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">running_children</span> <span class="o">&lt;</span> <span class="n">max</span> <span class="o">&amp;&amp;</span>
+            <span class="p">(</span><span class="n">fpm_global_config</span><span class="p">.</span><span class="n">process_max</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="o">||</span> <span class="n">fpm_globals</span><span class="p">.</span><span class="n">running_children</span> <span class="o">&lt;</span> <span class="n">fpm_global_config</span><span class="p">.</span><span class="n">process_max</span><span class="p">))</span> <span class="p">{</span>
+
+        <span class="n">warned</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="n">fpm_resources_prepare</span><span class="p">(</span><span class="n">wp</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="mi">2</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">pid</span> <span class="o">=</span> <span class="n">fork</span><span class="p">();</span>
+
+        <span class="k">switch</span> <span class="p">(</span><span class="n">pid</span><span class="p">)</span> <span class="p">{</span>
+
+            <span class="k">case</span> <span class="mi">0</span> <span class="o">:</span>
+                <span class="n">fpm_child_resources_use</span><span class="p">(</span><span class="n">child</span><span class="p">);</span>
+                <span class="n">fpm_globals</span><span class="p">.</span><span class="n">is_child</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+                <span class="n">fpm_child_init</span><span class="p">(</span><span class="n">wp</span><span class="p">);</span><span class="c1">//做一些初始化的工作</span>
+                <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+            <span class="k">case</span> <span class="o">-</span><span class="mi">1</span> <span class="o">:</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;fork() failed&quot;</span><span class="p">);</span>
+                <span class="n">fpm_resources_discard</span><span class="p">(</span><span class="n">child</span><span class="p">);</span>
+                <span class="k">return</span> <span class="mi">2</span><span class="p">;</span>
+
+            <span class="k">default</span> <span class="o">:</span>
+                <span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span> <span class="o">=</span> <span class="n">pid</span><span class="p">;</span>
+                <span class="n">fpm_clock_get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">started</span><span class="p">);</span>
+                <span class="n">fpm_parent_resources_use</span><span class="p">(</span><span class="n">child</span><span class="p">);</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">is_debug</span> <span class="o">?</span> <span class="nl">ZLOG_DEBUG</span> <span class="p">:</span> <span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;[pool %s] child %d started&quot;</span><span class="p">,</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">pid</span><span class="p">);</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+
+    <span class="c1">//这条warning日志打印的有问题，在pm为static同时process.max等于pm_max_children的时候是不应该打印的，可以参考另外一篇文章useless-warning-log-of-fpm</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">warned</span> <span class="o">&amp;&amp;</span> <span class="n">fpm_global_config</span><span class="p">.</span><span class="n">process_max</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">fpm_globals</span><span class="p">.</span><span class="n">running_children</span> <span class="o">&gt;=</span> <span class="n">fpm_global_config</span><span class="p">.</span><span class="n">process_max</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">warned</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;The maximum number of processes has been reached. Please review your configuration and consider raising &#39;process.max&#39;&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id8">
+<h3><a class="toc-backref" href="#id19">4.2&nbsp;&nbsp;&nbsp;子进程的初始化</a></h3>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">fpm_child_init</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_worker_pool_s</span> <span class="o">*</span> <span class="n">wp</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">fpm_globals</span><span class="p">.</span><span class="n">max_requests</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">pm_max_requests</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_stdio_init_child</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span>  <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_log_init_child</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span>    <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_status_init_child</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_unix_init_child</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span>   <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_signals_init_child</span><span class="p">()</span>  <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_env_init_child</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span>    <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fpm_php_init_child</span><span class="p">(</span><span class="n">wp</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_ERROR</span><span class="p">,</span> <span class="s">&quot;[pool %s] child failed to initialize&quot;</span><span class="p">,</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="n">FPM_EXIT_SOFTWARE</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id9">
+<h3><a class="toc-backref" href="#id20">4.3&nbsp;&nbsp;&nbsp;子进程主逻辑</a></h3>
+<p>在fpm_run里fork出的子进程，回到main主函数后，就开始accept client的请求进行处理</p>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="c1">//.............</span>
+
+    <span class="c1">//fork子进程，对子进程进行初始化</span>
+    <span class="n">fcgi_fd</span> <span class="o">=</span> <span class="n">fpm_run</span><span class="p">(</span><span class="o">&amp;</span><span class="n">max_requests</span><span class="p">);</span>
+
+    <span class="c1">//下面的是子进程的处理逻辑</span>
+    <span class="n">zend_first_try</span> <span class="p">{</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">fcgi_accept_request</span><span class="p">(</span><span class="o">&amp;</span><span class="n">request</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//子进程accept client的请求，加锁竞争fd</span>
+            <span class="n">php_execute_script</span><span class="p">(</span><span class="o">&amp;</span><span class="n">file_handle</span> <span class="n">TSRMLS_CC</span><span class="p">);</span> <span class="c1">//由zend引擎来执行php代码</span>
+
+            <span class="n">fpm_log_write</span><span class="p">(</span><span class="nb">NULL</span> <span class="n">TSRMLS_CC</span><span class="p">);</span><span class="c1">//打印fpm access log</span>
+
+            <span class="n">php_request_shutdown</span><span class="p">((</span><span class="kt">void</span> <span class="o">*</span> <span class="p">)</span> <span class="mi">0</span><span class="p">);</span><span class="c1">//做了十几项收尾工作</span>
+
+            <span class="c1">//如果一个子进程达到运行的最大次数，则需要退出，由主进程重新fork进程接受请求</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">max_requests</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">requests</span> <span class="o">==</span> <span class="n">max_requests</span><span class="p">))</span> <span class="p">{</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">fcgi_shutdown</span><span class="p">();</span>
+
+    <span class="p">}</span> <span class="n">zend_catch</span> <span class="p">{</span>
+        <span class="n">exit_status</span> <span class="o">=</span> <span class="n">FPM_EXIT_SOFTWARE</span><span class="p">;</span>
+    <span class="p">}</span> <span class="n">zend_end_try</span><span class="p">();</span>
+
+    <span class="k">return</span> <span class="n">exit_status</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">fcgi_accept_request</span><span class="p">(</span><span class="n">fcgi_request</span> <span class="o">*</span> <span class="n">req</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">listen_socket</span> <span class="o">=</span> <span class="n">req</span><span class="o">-&gt;</span><span class="n">listen_socket</span><span class="p">;</span>
+    <span class="kt">sa_t</span> <span class="n">sa</span><span class="p">;</span>
+    <span class="kt">socklen_t</span> <span class="n">len</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">sa</span><span class="p">);</span>
+
+    <span class="n">fpm_request_accepting</span><span class="p">();</span>
+
+    <span class="c1">//加锁 accept client的请求</span>
+    <span class="n">FCGI_LOCK</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">listen_socket</span><span class="p">);</span>
+    <span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span> <span class="o">=</span> <span class="n">accept</span><span class="p">(</span><span class="n">listen_socket</span><span class="p">,</span> <span class="p">(</span><span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span> <span class="p">)</span><span class="o">&amp;</span><span class="n">sa</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">len</span><span class="p">);</span>
+    <span class="n">FCGI_UNLOCK</span><span class="p">(</span><span class="n">req</span><span class="o">-&gt;</span><span class="n">listen_socket</span><span class="p">);</span>
+
+    <span class="n">fcgi_is_allowed</span><span class="p">();</span><span class="c1">//是否允许该client访问</span>
+
+    <span class="c1">//监听socket是否可读</span>
+    <span class="n">fds</span><span class="p">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">req</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span>
+    <span class="n">fds</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">POLLIN</span><span class="p">;</span>
+    <span class="n">fds</span><span class="p">.</span><span class="n">revents</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">do</span> <span class="p">{</span>
+        <span class="n">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">poll</span><span class="p">(</span><span class="o">&amp;</span><span class="n">fds</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5000</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span><span class="p">);</span>
+
+    <span class="n">fcgi_read_request</span><span class="p">(</span><span class="n">req</span><span class="p">);</span><span class="c1">//按fastcgi协议来解析请求</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h2><a class="toc-backref" href="#id21">5&nbsp;&nbsp;&nbsp;总结</a></h2>
+<p><strong>fpm主进程负责监控监听信号事件产生的socket事件以及执行定时任务</strong></p>
+<p><strong>子进程加锁accept client的请求，然后处理</strong></p>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>

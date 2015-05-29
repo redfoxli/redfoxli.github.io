@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>mysql - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+
+    <meta name="author" content="lihongbin" />
+    <meta name="keywords" content="mysql" />
+
+    <!-- Open Graph tags -->
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="website"/>
+        <meta property="og:title" content="redfox"/>
+        <meta property="og:url" content=""/>
+        <meta property="og:description" content="redfox"/>
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li >
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+            <article>
+                <h2><a href="/lower-diff-between-php-and-mysql.html">lower-diff-between-php-and-mysql</a></h2>
+                <div class="summary"><div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id4">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#id2" id="id5">2&nbsp;&nbsp;&nbsp;问题</a></li>
+<li><a class="reference internal" href="#id3" id="id6">3&nbsp;&nbsp;&nbsp;做的事情</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id4">1&nbsp;&nbsp;&nbsp;主题</a></h2>
+<p>主要记录 <tt class="docutils literal">php与mysql在大小写转换上的区别</tt> 问题</p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id5">2&nbsp;&nbsp;&nbsp;问题</a></h2>
+<p>mysql的大写转小写函数( <tt class="docutils literal">lower</tt> ) 与 php的大写转小写函数( <tt class="docutils literal">mb_strtolower</tt> , <tt class="docutils literal">strtolower</tt> 这个很low，就不说了 )在大部分case上是一致的，但是存在一些例外</p>
+<p>case:</p>
+<pre class="literal-block">
+$str = &quot;High School D×DⅡ &quot;;
+
+echo mb_strtolower( $str, &quot;UTF-8&quot;) . &quot;\n&quot;;
+</pre>
+<p>php 的输出为:</p>
+<pre class="literal-block">
+high school d×dⅡ
+</pre>
+<p>而mysql的输出为:</p>
+<pre class="literal-block">
+high school d×dⅱ
+</pre>
+<p>当然 <tt class="docutils literal">小写转大写也是存在这个问题的 ...</tt></p></div>
+                    <a class="btn btn-default btn-xs" href="/lower-diff-between-php-and-mysql.html">more ...</a>
+                </div>
+            </article>
+            <hr/>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>

@@ -1,145 +1,119 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
+<html lang="en"
+>
+<head>
+    <title>Categories - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
-    <title>redfox</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="lihongbin">
 
-    <!-- Le styles -->
-    <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css" />
-    <style type="text/css">
-      body {
-        padding-top: 60px;
-        padding-bottom: 40px;
-      }
-      .sidebar-nav {
-        padding: 9px 0;
-      }
-      .tag-1 {
-        font-size: 13pt;
-      }
-      .tag-2 {
-        font-size: 10pt;
-      }
-      .tag-2 {
-        font-size: 8pt;
-      }
-      .tag-4 {
-        font-size: 6pt;
-     }
-    </style>
-    <link href="/theme/css/bootstrap-responsive.min.css" rel="stylesheet">
-        <link href="/theme/css/font-awesome.css" rel="stylesheet">
 
-    <link href="/theme/css/pygments.css" rel="stylesheet">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
 
-    <!-- Le fav and touch icons -->
-    <link rel="shortcut icon" href="/theme/images/favicon.ico">
-    <link rel="apple-touch-icon" href="/theme/images/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/theme/images/apple-touch-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="/theme/images/apple-touch-icon-114x114.png">
+        <meta name="author" content="lihongbin" />
 
-    <link href="/" type="application/atom+xml" rel="alternate" title="redfox ATOM Feed" />
+    <!-- Open Graph tags -->
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="website"/>
+        <meta property="og:title" content="redfox"/>
+        <meta property="og:url" content=""/>
+        <meta property="og:description" content="redfox"/>
 
-  </head>
 
-  <body>
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
 
-    <div class="navbar navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container-fluid">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <a class="brand" href="/index.html">redfox </a>
-          <div class="nav-collapse">
-            <ul class="nav">
-                          <li class="divider-vertical"></li>
-                  <li >
-                    <a href="/category/php.html">
-						<i class="icon-folder-open icon-large"></i>php
-					</a>
-                  </li>
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
 
-                          <ul class="nav pull-right">
-                                <li><a href="/archives.html"><i class="icon-th-list"></i>Archives</a></li>
-                          </ul>
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
 
-            </ul>
-            <!--<p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>-->
-          </div><!--/.nav-collapse -->
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
         </div>
-      </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li >
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
     </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
 
-    <div class="container-fluid">
-      <div class="row">
-        <div class="span12" id="content">
-<ul>
-	<li><a href="category/php.html">php</a></li>
-</ul>
-        </div><!--/span-->
+    <section id="categories">
+        <h1>All Categories for redfox</h1>
+        <div class="panel-group" id="accordion">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">
+                        <a data-toggle="collapse" data-parent="#accordion" href="#collapse-php">php <span class="badge pull-right">9</span></a>
+                    </h4>
+                </div>
+                <div id="collapse-php" class="panel-collapse collapse">
+                    <div class="panel-body">
+                        <p><span class="categories-timestamp"><time datetime="2015-05-28T16:30:38+08:00">Thu 28 May 2015</time></span> <a href="/lower-diff-between-php-and-mysql.html">lower-diff-between-php-and-mysql</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2015-03-31T02:29:29+08:00">Tue 31 March 2015</time></span> <a href="/php-fpm-signals.html">php-fpm-signals</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2015-03-30T23:40:55+08:00">Mon 30 March 2015</time></span> <a href="/php-fpm-events.html">php-fpm-events</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2015-03-23T23:26:37+08:00">Mon 23 March 2015</time></span> <a href="/php-fpm-framework.html">php-fpm-framework</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2015-03-20T15:18:58+08:00">Fri 20 March 2015</time></span> <a href="/useless-warning-log-of-fpm.html">useless-warning-log-of-fpm</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2015-01-14T16:41:24+08:00">Wed 14 January 2015</time></span> <a href="/encoding-considerations.html">encoding-considerations</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2015-01-13T12:37:04+08:00">Tue 13 January 2015</time></span> <a href="/wrong-access-log-when-use-fastcgi_finish_request.html">wrong-access-log-when-use-fastcgi_finish_request</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2014-12-16T18:32:12+08:00">Tue 16 December 2014</time></span> <a href="/make-service-unavailable-by-fin-loss-attack.html">make-service-unavailable-by-fin-loss-attack</a></p>
+                        <p><span class="categories-timestamp"><time datetime="2014-10-25T15:37:27+08:00">Sat 25 October 2014</time></span> <a href="/fast-cgi-protocol.html">fast-cgi-protocol</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <div class="span3 well sidebar-nav" id="sidebar">
-<ul class="nav nav-list">
-
-<li class="nav-header"><h4><i class="icon-folder-close icon-large"></i>Categories</h4></li>
-<li>
-<a href="/category/php.html">
-    <i class="icon-folder-open icon-large"></i>php
-</a>
-</li>
-
-<li class="nav-header"><h4><i class="icon-tags icon-large"></i>Tags</h4></li>
-<li class="tag-3">
-    <a href="/tag/security.html">
-        <i class="icon-tag icon-large"></i>security
-    </a>
-</li>
-<li class="tag-1">
-    <a href="/tag/.html">
-        <i class="icon-tag icon-large"></i>
-    </a>
-</li>
-<li class="tag-1">
-    <a href="/tag/all.html">
-        <i class="icon-tag icon-large"></i>all
-    </a>
-</li>
-
-
-</ul>        </div><!--/.well -->
-
-      </div><!--/row-->
-
+    </section>
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
       <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
 
-      <footer>
-        <address id="about">
-                Proudly powered by <a href="http://pelican.notmyidea.org/">Pelican <i class="icon-external-link"></i></a>,
-                                which takes great advantage of <a href="http://python.org">Python <i class="icon-external-link"></i></a>.
-        </address><!-- /#about -->
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
 
-        <p>The theme is from <a href="http://twitter.github.com/bootstrap/">Bootstrap from Twitter <i class="icon-external-link"></i></a>,
-                   and <a href="http://fortawesome.github.com/Font-Awesome/">Font-Awesome <i class="icon-external-link"></i></a>, thanks!</p>
-      </footer>
-
-    </div><!--/.fluid-container-->
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
 
 
-
-    <!-- Le javascript -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="/theme/js/jquery-1.7.2.min.js"></script>
-    <script src="/theme/js/bootstrap.min.js"></script>
-  </body>
+</body>
 </html>

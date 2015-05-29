@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>useless-warning-log-of-fpm - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="/useless-warning-log-of-fpm.html">
+
+        <meta name="author" content="lihongbin" />
+        <meta name="keywords" content="all," />
+        <meta name="description" content="Table of Contents 1   问题 1.1   背景 1.2   fpm的相关使用策略 2   定位 2.1   源码 2.2   分析 2.2.1   复现前提 2.2.2   分析 2.2.3   结论 3   解决 1   问题 1.1   背景 在线上fpm的日志里经常可以看到这种 warning 日志: [20-Mar-2015 15:15:52] WARNING: The maximum number of ..." />
+
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="useless-warning-log-of-fpm"/>
+        <meta property="og:url" content="/useless-warning-log-of-fpm.html"/>
+        <meta property="og:description" content="Table of Contents 1   问题 1.1   背景 1.2   fpm的相关使用策略 2   定位 2.1   源码 2.2   分析 2.2.1   复现前提 2.2.2   分析 2.2.3   结论 3   解决 1   问题 1.1   背景 在线上fpm的日志里经常可以看到这种 warning 日志: [20-Mar-2015 15:15:52] WARNING: The maximum number of ..."/>
+        <meta property="article:published_time" content="2015-03-20" />
+            <meta property="article:section" content="php" />
+            <meta property="article:tag" content="all" />
+            <meta property="article:tag" content="" />
+            <meta property="article:author" content="lihongbin" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="/useless-warning-log-of-fpm.html"
+                       rel="bookmark"
+                       title="Permalink to useless-warning-log-of-fpm">
+                        useless-warning-log-of-fpm
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-03-20T15:18:58+08:00"> Fri 20 March 2015</time>
+    </span>
+            <span class="label label-default">By</span>
+            <a href="/author/lihongbin.html"><i class="fa fa-user"></i> lihongbin</a>
+
+        <span class="label label-default">Category</span>
+        <a href="/category/php.html">php</a>
+
+
+<span class="label label-default">Tags</span>
+	<a href="/tag/all.html">all</a>
+        /
+	<a href="/tag/.html"></a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id10">1&nbsp;&nbsp;&nbsp;问题</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id2" id="id11">1.1&nbsp;&nbsp;&nbsp;背景</a></li>
+<li><a class="reference internal" href="#fpm" id="id12">1.2&nbsp;&nbsp;&nbsp;fpm的相关使用策略</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id3" id="id13">2&nbsp;&nbsp;&nbsp;定位</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id4" id="id14">2.1&nbsp;&nbsp;&nbsp;源码</a></li>
+<li><a class="reference internal" href="#id5" id="id15">2.2&nbsp;&nbsp;&nbsp;分析</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id6" id="id16">2.2.1&nbsp;&nbsp;&nbsp;复现前提</a></li>
+<li><a class="reference internal" href="#id7" id="id17">2.2.2&nbsp;&nbsp;&nbsp;分析</a></li>
+<li><a class="reference internal" href="#id8" id="id18">2.2.3&nbsp;&nbsp;&nbsp;结论</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id9" id="id19">3&nbsp;&nbsp;&nbsp;解决</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id10">1&nbsp;&nbsp;&nbsp;问题</a></h2>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id11">1.1&nbsp;&nbsp;&nbsp;背景</a></h3>
+<p>在线上fpm的日志里经常可以看到这种 <tt class="docutils literal">warning</tt> 日志:</p>
+<pre class="literal-block">
+[20-Mar-2015 15:15:52] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:15:53] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:16:04] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:16:19] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:16:37] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:16:42] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:16:52] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:17:24] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+[20-Mar-2015 15:17:36] WARNING: The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'
+</pre>
+</div>
+<div class="section" id="fpm">
+<h3><a class="toc-backref" href="#id12">1.2&nbsp;&nbsp;&nbsp;fpm的相关使用策略</a></h3>
+<p>使用了一个pool， <tt class="docutils literal">200</tt>  个子进程，子进程采用 <tt class="docutils literal">静态</tt> 策略(即 <tt class="docutils literal">pm = static</tt> )</p>
+<p>在全局配置里，设置 <tt class="docutils literal">process.max = 200</tt> ，这个变量是控制全部pool的子进程个数之和</p>
+</div>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id13">2&nbsp;&nbsp;&nbsp;定位</a></h2>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id14">2.1&nbsp;&nbsp;&nbsp;源码</a></h3>
+<p>根据日志，在源码里搜相关的代码，找到了如下片段:</p>
+<pre class="literal-block">
+// sapi/fpm/fpm/fpm_children.c
+int fpm_children_make(struct fpm_worker_pool_s* wp, int in_event_loop, int nb_to_spawn, int is_debug)
+{
+    //.....................
+    if (wp-&gt;config-&gt;pm == PM_STYLE_DYNAMIC) {
+        //max = .....
+    } else if (wp-&gt;config-&gt;pm == PM_STYLE_ONDEMAND) {
+        //max = .....
+    } else { // PM_STYLE_STATIC
+        //max = .....
+    }
+
+    while (fpm_pctl_can_spawn_children() &amp;&amp; wp-&gt;running_children &lt; max &amp;&amp;
+            (fpm_global_config.process_max &lt; 1 || fpm_globals.running_children &lt; fpm_global_config.process_max)) {
+        //............
+        pid = fork();
+        //............
+    }
+
+    //here,~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if (!warned &amp;&amp; fpm_global_config.process_max &gt; 0 &amp;&amp; fpm_globals.running_children &gt;= fpm_global_config.process_max) {
+        warned = 1;
+        zlog(ZLOG_WARNING, &quot;The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'&quot;);
+    }
+
+    return 1;
+}
+</pre>
+</div>
+<div class="section" id="id5">
+<h3><a class="toc-backref" href="#id15">2.2&nbsp;&nbsp;&nbsp;分析</a></h3>
+<div class="section" id="id6">
+<h4><a class="toc-backref" href="#id16">2.2.1&nbsp;&nbsp;&nbsp;复现前提</a></h4>
+<p>在子进程接受的请求达到 <tt class="docutils literal">pm.max_requests</tt> 次后，该子进程就会退出，主进程会重新fork子进程，于是就会走到 <tt class="docutils literal">fpm_children_make</tt> 这个函数里</p>
+</div>
+<div class="section" id="id7">
+<h4><a class="toc-backref" href="#id17">2.2.2&nbsp;&nbsp;&nbsp;分析</a></h4>
+<p>由于线上采用的是静态生成子进程方式，进程数是固定的，同时fpm里设置了 <tt class="docutils literal">process.max == pm.max_children</tt></p>
+<p>当同一个时刻只有一个子进程需要退出时，从代码上看，fork完后，fpm_globals.running_children 就达到了 pm.max_children，而 fpm_global_config.process_max 就是 process.max</p>
+<p>这个时候两者相等，于是就会走到打印warning日志的分支里</p>
+<p>在fpm的配置文件里是这样描述process.max的:</p>
+<pre class="literal-block">
+The maximum number of processes FPM will fork. This has been design to control
+the global number of processes when using dynamic PM within a lot of pools.
+Use it with caution.
+</pre>
+<p>主要是为了限制全部pool的子进程个数之和，针对使用了 dynamic PM</p>
+</div>
+<div class="section" id="id8">
+<h4><a class="toc-backref" href="#id18">2.2.3&nbsp;&nbsp;&nbsp;结论</a></h4>
+<p>在线上这种使用了 <tt class="docutils literal">1个static的pool &amp;&amp; process.max == pm.max_children</tt> 的情况下， <strong>其实是不应该打印这条warning日志的</strong> , 有点多余</p>
+</div>
+</div>
+</div>
+<div class="section" id="id9">
+<h2><a class="toc-backref" href="#id19">3&nbsp;&nbsp;&nbsp;解决</a></h2>
+<p>在打印日志的时候，应该判断一下这样情况，如果是静态&amp;&amp;已经达到最大子进程数，则不打印warning，源码修改如下:</p>
+<pre class="literal-block">
+if (!warned &amp;&amp; fpm_global_config.process_max &gt; 0 &amp;&amp; fpm_globals.running_children &gt;= fpm_global_config.process_max) {
+    if (wp-&gt;config-&gt;pm != PM_STYLE_STATIC ||  wp-&gt;running_children &lt; max) { //~~~~~
+        warned = 1;
+        zlog(ZLOG_WARNING, &quot;The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'&quot;);
+    }
+}
+</pre>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>encoding-considerations - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="/encoding-considerations.html">
+
+        <meta name="author" content="lihongbin" />
+        <meta name="keywords" content="all,php" />
+        <meta name="description" content="Table of Contents 1   主题 2   类型自动转换 2.1   字符串比较大小 2.1.1   例子 2.2   in_array的用法 2.2.1   例子 3   现有php的bug 3.1   CURLOPT_POSTFIELDS参数的改变 3.1.1   例子 4   其它 4.1   尽量不要写php的右关闭符号 4.1.1   例子 4.2   foreach与引用 4.2.1   例子 1   主题 本文主要是记录一些php编码的注意事项， 以免踩坑 ..." />
+
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="encoding-considerations"/>
+        <meta property="og:url" content="/encoding-considerations.html"/>
+        <meta property="og:description" content="Table of Contents 1   主题 2   类型自动转换 2.1   字符串比较大小 2.1.1   例子 2.2   in_array的用法 2.2.1   例子 3   现有php的bug 3.1   CURLOPT_POSTFIELDS参数的改变 3.1.1   例子 4   其它 4.1   尽量不要写php的右关闭符号 4.1.1   例子 4.2   foreach与引用 4.2.1   例子 1   主题 本文主要是记录一些php编码的注意事项， 以免踩坑 ..."/>
+        <meta property="article:published_time" content="2015-01-14" />
+            <meta property="article:section" content="php" />
+            <meta property="article:tag" content="all" />
+            <meta property="article:tag" content="php" />
+            <meta property="article:author" content="lihongbin" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="/encoding-considerations.html"
+                       rel="bookmark"
+                       title="Permalink to encoding-considerations">
+                        encoding-considerations
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-01-14T16:41:24+08:00"> Wed 14 January 2015</time>
+    </span>
+            <span class="label label-default">By</span>
+            <a href="/author/lihongbin.html"><i class="fa fa-user"></i> lihongbin</a>
+
+        <span class="label label-default">Category</span>
+        <a href="/category/php.html">php</a>
+
+
+<span class="label label-default">Tags</span>
+	<a href="/tag/all.html">all</a>
+        /
+	<a href="/tag/php.html">php</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id10">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#id2" id="id11">2&nbsp;&nbsp;&nbsp;类型自动转换</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id3" id="id12">2.1&nbsp;&nbsp;&nbsp;字符串比较大小</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id4" id="id13">2.1.1&nbsp;&nbsp;&nbsp;例子</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#in-array" id="id14">2.2&nbsp;&nbsp;&nbsp;in_array的用法</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id5" id="id15">2.2.1&nbsp;&nbsp;&nbsp;例子</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#phpbug" id="id16">3&nbsp;&nbsp;&nbsp;现有php的bug</a><ul class="auto-toc">
+<li><a class="reference internal" href="#curlopt-postfields" id="id17">3.1&nbsp;&nbsp;&nbsp;CURLOPT_POSTFIELDS参数的改变</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id6" id="id18">3.1.1&nbsp;&nbsp;&nbsp;例子</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7" id="id19">4&nbsp;&nbsp;&nbsp;其它</a><ul class="auto-toc">
+<li><a class="reference internal" href="#php" id="id20">4.1&nbsp;&nbsp;&nbsp;尽量不要写php的右关闭符号</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id8" id="id21">4.1.1&nbsp;&nbsp;&nbsp;例子</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#foreach" id="id22">4.2&nbsp;&nbsp;&nbsp;foreach与引用</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id9" id="id23">4.2.1&nbsp;&nbsp;&nbsp;例子</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id10">1&nbsp;&nbsp;&nbsp;主题</a></h2>
+<p>本文主要是记录一些php编码的注意事项， <tt class="docutils literal">以免踩坑</tt></p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id11">2&nbsp;&nbsp;&nbsp;类型自动转换</a></h2>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id12">2.1&nbsp;&nbsp;&nbsp;字符串比较大小</a></h3>
+<p>两个字符串大小关系的比较， <tt class="docutils literal">用strcmp, <span class="pre">不要用==,</span> &lt; or &gt;</tt></p>
+<div class="section" id="id4">
+<h4><a class="toc-backref" href="#id13">2.1.1&nbsp;&nbsp;&nbsp;例子</a></h4>
+<p>code:</p>
+<pre class="literal-block">
+&lt;?php
+    //such as $a = md5('xxxxx');
+    $a = &quot;0e123456789012345678901234567890&quot;;
+    $b = &quot;0e223456789012345678901234567890&quot;;
+
+    var_dump($a &lt; $b);
+    var_dump(strcmp($a, $b) &lt; 0);
+</pre>
+<p>输出为:</p>
+<pre class="literal-block">
+bool(false)
+bool(true)
+</pre>
+<p>原因:</p>
+<pre class="literal-block">
+用&lt;进行比较的时候，把$a和$b转成整数了，值都为0(科学计算法)，而用strcmp进行比较是很安全的，不会做神马转换
+</pre>
+</div>
+</div>
+<div class="section" id="in-array">
+<h3><a class="toc-backref" href="#id14">2.2&nbsp;&nbsp;&nbsp;in_array的用法</a></h3>
+<p>注意in_array函数第三个参数的意义，严格检查类型:</p>
+<pre class="literal-block">
+bool in_array ( mixed $needle , array $haystack [, bool $strict = FALSE ] )
+</pre>
+<div class="section" id="id5">
+<h4><a class="toc-backref" href="#id15">2.2.1&nbsp;&nbsp;&nbsp;例子</a></h4>
+<p>code:</p>
+<pre class="literal-block">
+&lt;?php
+    $arr = array(0);
+    if(in_array('xxxx', $arr))
+    {
+        echo &quot;yes\n&quot;;
+    }
+    else
+    {
+        echo &quot;no\n&quot;;
+    }
+</pre>
+<p>输出为:</p>
+<pre class="literal-block">
+yes
+</pre>
+<p>原因:</p>
+<pre class="literal-block">
+和上面那个case一样的，进行比较的时候，也自动做了类型的转换，'xxxx'转换为整数为0，于是就在数组中了
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="phpbug">
+<h2><a class="toc-backref" href="#id16">3&nbsp;&nbsp;&nbsp;现有php的bug</a></h2>
+<div class="section" id="curlopt-postfields">
+<h3><a class="toc-backref" href="#id17">3.1&nbsp;&nbsp;&nbsp;CURLOPT_POSTFIELDS参数的改变</a></h3>
+<p>注意传入CURLOPT_POSTFIELDS的参数的变化</p>
+<div class="section" id="id6">
+<h4><a class="toc-backref" href="#id18">3.1.1&nbsp;&nbsp;&nbsp;例子</a></h4>
+<p>code:</p>
+<pre class="literal-block">
+&lt;?php
+    $ch = curl_init();
+    $post_data = array('a' =&gt; 1, 'b' =&gt; '2');
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+
+    if($post_data['a'] === 1)
+    {
+        echo &quot;yes\n&quot;;
+    }
+    else
+    {
+        echo &quot;no\n&quot;;
+    }
+</pre>
+<p>输出为:</p>
+<pre class="literal-block">
+no
+</pre>
+<p>原因:</p>
+<pre class="literal-block">
+现有php代码的bug，没有对参数做变量分离，已经向官方提bug了(https://bugs.php.net/bug.php?id=67704)，并在github上提了PR(https://github.com/php/php-src/pull/927)
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="id7">
+<h2><a class="toc-backref" href="#id19">4&nbsp;&nbsp;&nbsp;其它</a></h2>
+<div class="section" id="php">
+<h3><a class="toc-backref" href="#id20">4.1&nbsp;&nbsp;&nbsp;尽量不要写php的右关闭符号</a></h3>
+<p>如果写了php的右关闭符号(?&gt;)，则在这个符号后面一定不能有任何额外的字符，包括空格或者回车， <tt class="docutils literal">这些额外字符会被一起输出给client</tt></p>
+<div class="section" id="id8">
+<h4><a class="toc-backref" href="#id21">4.1.1&nbsp;&nbsp;&nbsp;例子</a></h4>
+<p>code:</p>
+<pre class="literal-block">
+&lt;?php
+    echo &quot;hi\n&quot;;
+?&gt;xxxxxxx
+</pre>
+</div>
+</div>
+<div class="section" id="foreach">
+<h3><a class="toc-backref" href="#id22">4.2&nbsp;&nbsp;&nbsp;foreach与引用</a></h3>
+<p>这是一个老问题了，网上有很多case
+在foreach里使用引用完毕的时候， <tt class="docutils literal">需要把引用的变量unset</tt> ，否则坑太多了</p>
+<div class="section" id="id9">
+<h4><a class="toc-backref" href="#id23">4.2.1&nbsp;&nbsp;&nbsp;例子</a></h4>
+<p>code:</p>
+<pre class="literal-block">
+&lt;?php
+    $arr = array('a', 'b');
+
+    foreach($arr as &amp;$item);
+    print_r($arr);
+
+    //unset($item);//if unset $item, it will ok
+
+    foreach($arr as $item);
+    print_r($arr);
+</pre>
+<p>输出为:</p>
+<pre class="literal-block">
+Array
+(
+    [0] =&gt; a
+    [1] =&gt; b
+)
+Array
+(
+    [0] =&gt; a
+    [1] =&gt; a
+)
+</pre>
+<p>原因:</p>
+<pre class="literal-block">
+在第一个foreach后，item还是指向$arr[1]，在后续的foreach里，$arr[1]被$arr[0]以及$arr[1]赋值，所以$arr[1]的值就是和$arr[count($arr) - 2]的值一样的了
+可以再看看这个:http://stackoverflow.com/questions/8220399/php-foreach-pass-by-reference-last-element-duplicating-bug
+</pre>
+</div>
+</div>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>

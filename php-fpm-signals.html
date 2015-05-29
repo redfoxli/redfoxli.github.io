@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en"
+>
+<head>
+    <title>php-fpm-signals - redfox</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="/php-fpm-signals.html">
+
+        <meta name="author" content="lihongbin" />
+        <meta name="keywords" content="all,php,fpm,signal" />
+        <meta name="description" content="Table of Contents 1   主题 2   涉及的源码 3   子进程信号相关处理 3.1   信号初始化 3.2   信号处理回调函数 4   主进程信号相关处理 4.1   信号初始化 4.2   信号处理回调函数 4.3   信号事件的处理逻辑 4.3.1   来自子进程信号的处理逻辑 4.3.2   来自外部信号的处理逻辑 5   具体case分析 5.1   由外界触发的信号 5.1.1   终止进程操作 5.1.2   优雅停止服务操作 5.1.3 ..." />
+
+        <meta property="og:site_name" content="redfox" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="php-fpm-signals"/>
+        <meta property="og:url" content="/php-fpm-signals.html"/>
+        <meta property="og:description" content="Table of Contents 1   主题 2   涉及的源码 3   子进程信号相关处理 3.1   信号初始化 3.2   信号处理回调函数 4   主进程信号相关处理 4.1   信号初始化 4.2   信号处理回调函数 4.3   信号事件的处理逻辑 4.3.1   来自子进程信号的处理逻辑 4.3.2   来自外部信号的处理逻辑 5   具体case分析 5.1   由外界触发的信号 5.1.1   终止进程操作 5.1.2   优雅停止服务操作 5.1.3 ..."/>
+        <meta property="article:published_time" content="2015-03-31" />
+            <meta property="article:section" content="php" />
+            <meta property="article:tag" content="all" />
+            <meta property="article:tag" content="php" />
+            <meta property="article:tag" content="fpm" />
+            <meta property="article:tag" content="signal" />
+            <meta property="article:author" content="lihongbin" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="/theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="/theme/css/pygments/fruity.css" rel="stylesheet">
+    <link rel="stylesheet" href="/theme/css/style.css" type="text/css"/>
+
+        <link href="/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="redfox ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="/" class="navbar-brand">
+redfox            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+                        <li class="active">
+                            <a href="/category/php.html">Php</a>
+                        </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="/php-fpm-signals.html"
+                       rel="bookmark"
+                       title="Permalink to php-fpm-signals">
+                        php-fpm-signals
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-03-31T02:29:29+08:00"> Tue 31 March 2015</time>
+    </span>
+            <span class="label label-default">Modified</span>
+            <span class="modified">
+                <i class="fa fa-calendar"></i><time datetime="2015-04-08T01:15:43+08:00"> Wed 08 April 2015</time>
+            </span>
+            <span class="label label-default">By</span>
+            <a href="/author/lihongbin.html"><i class="fa fa-user"></i> lihongbin</a>
+
+        <span class="label label-default">Category</span>
+        <a href="/category/php.html">php</a>
+
+
+<span class="label label-default">Tags</span>
+	<a href="/tag/all.html">all</a>
+        /
+	<a href="/tag/php.html">php</a>
+        /
+	<a href="/tag/fpm.html">fpm</a>
+        /
+	<a href="/tag/signal.html">signal</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="contents topic" id="table-of-contents">
+<p class="topic-title first">Table of Contents</p>
+<ul class="auto-toc simple">
+<li><a class="reference internal" href="#id1" id="id18">1&nbsp;&nbsp;&nbsp;主题</a></li>
+<li><a class="reference internal" href="#id2" id="id19">2&nbsp;&nbsp;&nbsp;涉及的源码</a></li>
+<li><a class="reference internal" href="#id3" id="id20">3&nbsp;&nbsp;&nbsp;子进程信号相关处理</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id4" id="id21">3.1&nbsp;&nbsp;&nbsp;信号初始化</a></li>
+<li><a class="reference internal" href="#id5" id="id22">3.2&nbsp;&nbsp;&nbsp;信号处理回调函数</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6" id="id23">4&nbsp;&nbsp;&nbsp;主进程信号相关处理</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id7" id="id24">4.1&nbsp;&nbsp;&nbsp;信号初始化</a></li>
+<li><a class="reference internal" href="#id8" id="id25">4.2&nbsp;&nbsp;&nbsp;信号处理回调函数</a></li>
+<li><a class="reference internal" href="#id9" id="id26">4.3&nbsp;&nbsp;&nbsp;信号事件的处理逻辑</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id10" id="id27">4.3.1&nbsp;&nbsp;&nbsp;来自子进程信号的处理逻辑</a></li>
+<li><a class="reference internal" href="#id11" id="id28">4.3.2&nbsp;&nbsp;&nbsp;来自外部信号的处理逻辑</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#case" id="id29">5&nbsp;&nbsp;&nbsp;具体case分析</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id12" id="id30">5.1&nbsp;&nbsp;&nbsp;由外界触发的信号</a><ul class="auto-toc">
+<li><a class="reference internal" href="#id13" id="id31">5.1.1&nbsp;&nbsp;&nbsp;终止进程操作</a></li>
+<li><a class="reference internal" href="#id14" id="id32">5.1.2&nbsp;&nbsp;&nbsp;优雅停止服务操作</a></li>
+<li><a class="reference internal" href="#id15" id="id33">5.1.3&nbsp;&nbsp;&nbsp;重新打开日志操作</a></li>
+<li><a class="reference internal" href="#reload" id="id34">5.1.4&nbsp;&nbsp;&nbsp;reload操作</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id16" id="id35">5.2&nbsp;&nbsp;&nbsp;由主进程触发的信号</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id17" id="id36">6&nbsp;&nbsp;&nbsp;总结</a></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id18">1&nbsp;&nbsp;&nbsp;主题</a></h2>
+<p>从源码角度(<tt class="docutils literal"><span class="pre">php-5.5.20</span></tt>)来分析php-fpm的运行机制</p>
+<p>fpm的源码在 <tt class="docutils literal">sapi/fpm/fpm</tt> 下</p>
+<p><strong>本文主要介绍fpm的信号机制</strong></p>
+</div>
+<div class="section" id="id2">
+<h2><a class="toc-backref" href="#id19">2&nbsp;&nbsp;&nbsp;涉及的源码</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_signals.c</tt></li>
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_signals.h</tt></li>
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_events.c</tt></li>
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_events.h</tt></li>
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_process_ctl.c</tt></li>
+<li><tt class="docutils literal">sapi/fpm/fpm/fpm_process_ctl.h</tt></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2><a class="toc-backref" href="#id20">3&nbsp;&nbsp;&nbsp;子进程信号相关处理</a></h2>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id21">3.1&nbsp;&nbsp;&nbsp;信号初始化</a></h3>
+<div class="highlight"><pre><span class="kt">int</span> <span class="nf">fpm_signals_init_child</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">sigaction</span> <span class="n">act</span><span class="p">,</span> <span class="n">act_dfl</span><span class="p">;</span>
+
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">act</span><span class="p">));</span>
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">act_dfl</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">act_dfl</span><span class="p">));</span>
+
+    <span class="n">act</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">sig_soft_quit</span><span class="p">;</span><span class="c1">//设置了一个信号处理回调函数</span>
+    <span class="n">act</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">|=</span> <span class="n">SA_RESTART</span><span class="p">;</span>
+
+    <span class="n">act_dfl</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">SIG_DFL</span><span class="p">;</span><span class="c1">//按系统默认的处理方法处理信号</span>
+
+    <span class="c1">//和fpm主进程不一样，直接关闭socket对，不使用socket对进行通信</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+
+    <span class="c1">//设置了相关需要关注的信号</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act_dfl</span><span class="p">,</span>  <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span>   <span class="o">&amp;</span><span class="n">act_dfl</span><span class="p">,</span>  <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGUSR1</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act_dfl</span><span class="p">,</span>  <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGUSR2</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act_dfl</span><span class="p">,</span>  <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGCHLD</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act_dfl</span><span class="p">,</span>  <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGQUIT</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span>      <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;failed to init child signals: sigaction()&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id5">
+<h3><a class="toc-backref" href="#id22">3.2&nbsp;&nbsp;&nbsp;信号处理回调函数</a></h3>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">sig_soft_quit</span><span class="p">(</span><span class="kt">int</span> <span class="n">signo</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">saved_errno</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>
+
+    <span class="c1">//closing fastcgi listening socket will force fcgi_accept() exit immediately</span>
+    <span class="n">close</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">socket</span><span class="p">(</span><span class="n">AF_UNIX</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;failed to create a new socket&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">fpm_php_soft_quit</span><span class="p">();</span> <span class="c1">// fpm_php_soft_quit() ==&gt; in_shutdown = 1</span>
+    <span class="n">errno</span> <span class="o">=</span> <span class="n">saved_errno</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2><a class="toc-backref" href="#id23">4&nbsp;&nbsp;&nbsp;主进程信号相关处理</a></h2>
+<p>简单的说， <strong>fpm主进程把信号事件转换为socket事件来进行处理</strong></p>
+<p>通过建立了一个socketpair，当有信号事件的时候，信号事件的回调函数里向socket里写一个信号标记，然后主进程从socket里读出这个标记进行处理</p>
+<div class="section" id="id7">
+<h3><a class="toc-backref" href="#id24">4.1&nbsp;&nbsp;&nbsp;信号初始化</a></h3>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">int</span> <span class="n">sp</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+
+<span class="kt">int</span> <span class="nf">fpm_signals_init_main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">sigaction</span> <span class="n">act</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">socketpair</span><span class="p">(</span><span class="n">AF_UNIX</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sp</span><span class="p">))</span> <span class="p">{</span><span class="c1">//建立socket对，通过这个把信号事件转换为socket事件，然后在fpm_events里通过io复用获取事件然后处理</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;failed to init signals: socketpair()&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fd_set_blocked</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span> <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fd_set_blocked</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span><span class="c1">//设置成非阻塞</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;failed to init signals: fd_set_blocked()&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">//使在子进程中，此描述符并不关闭，仍可使用，但实际上子进程把这对socket关闭了</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fcntl</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">F_SETFD</span><span class="p">,</span> <span class="n">FD_CLOEXEC</span><span class="p">)</span> <span class="o">||</span> <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">fcntl</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">F_SETFD</span><span class="p">,</span> <span class="n">FD_CLOEXEC</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;falied to init signals: fcntl(F_SETFD, FD_CLOEXEC)&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">act</span><span class="p">));</span>
+    <span class="n">act</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">sig_handler</span><span class="p">;</span><span class="c1">//设置了信号处理回调函数，很重要</span>
+    <span class="n">sigfillset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">act</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
+
+    <span class="c1">//设置了需要关注的信号</span>
+    <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGTERM</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span>   <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGUSR1</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGUSR2</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGCHLD</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">||</span>
+        <span class="mi">0</span> <span class="o">&gt;</span> <span class="n">sigaction</span><span class="p">(</span><span class="n">SIGQUIT</span><span class="p">,</span>  <span class="o">&amp;</span><span class="n">act</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;failed to init signals: sigaction()&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id8">
+<h3><a class="toc-backref" href="#id25">4.2&nbsp;&nbsp;&nbsp;信号处理回调函数</a></h3>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">sig_handler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signo</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="n">sig_chars</span><span class="p">[</span><span class="n">NSIG</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">[</span><span class="n">SIGTERM</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;T&#39;</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">SIGINT</span><span class="p">]</span>  <span class="o">=</span> <span class="sc">&#39;I&#39;</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">SIGUSR1</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;1&#39;</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">SIGUSR2</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;2&#39;</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">SIGQUIT</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;Q&#39;</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">SIGCHLD</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;C&#39;</span>
+    <span class="p">};</span>
+    <span class="kt">char</span> <span class="n">s</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">saved_errno</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">parent_pid</span> <span class="o">!=</span> <span class="n">getpid</span><span class="p">())</span> <span class="p">{</span>
+        <span class="c1">//prevent a signal race condition when child process have not set up it&#39;s own signal handler yet</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">saved_errno</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sig_chars</span><span class="p">[</span><span class="n">signo</span><span class="p">];</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">sp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">s</span><span class="p">));</span><span class="c1">//向socket对里写上该信号的标记，完美的把信号转换为socket事件，由fpm_events从sp[0] 这个socket里读取数据，然后处理</span>
+    <span class="n">errno</span> <span class="o">=</span> <span class="n">saved_errno</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id9">
+<h3><a class="toc-backref" href="#id26">4.3&nbsp;&nbsp;&nbsp;信号事件的处理逻辑</a></h3>
+<p>在 sig_handler 里把信号事件转换为socket事件后，由fpm_events来处理信号，先回顾一下fpm_events的处理逻辑</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_event_loop</span><span class="p">(</span><span class="kt">int</span> <span class="n">err</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">static</span> <span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="n">signal_fd_event</span><span class="p">;</span>
+
+    <span class="c1">//fpm_signals_get_fd() ==&gt; sp[0]</span>
+    <span class="c1">//设置了对socket sp[0]的可读监控，如果可读，则回调函数为fpm_got_signal</span>
+    <span class="n">fpm_event_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_fd_event</span><span class="p">,</span> <span class="n">fpm_signals_get_fd</span><span class="p">(),</span> <span class="n">FPM_EV_READ</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">fpm_got_signal</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="n">fpm_event_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">signal_fd_event</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">//................</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">module</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="n">fpm_event_queue_fd</span><span class="p">,</span> <span class="n">timeout</span><span class="p">);</span><span class="c1">//sp[0] socket可读，则执行函数 fpm_got_signal</span>
+        <span class="c1">//................</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<p>信号事件的处理主要是在函数 <tt class="docutils literal">fpm_got_signal</tt> 里，根据不同的信号调用不同的函数实现其功能</p>
+<p>主进程收到的这些信号有两种来源:</p>
+<ul class="simple">
+<li>来自外部的，这种的最多，比如要求停止进程</li>
+<li>来自子进程的，比如子进程暂停或者停止，都会向主进程发送一个信号</li>
+</ul>
+<p>另外， <tt class="docutils literal">主进程也会向子进程发送信号</tt> ，有以下的情况</p>
+<ul class="simple">
+<li>为了记录慢请求，主进程会向子进程发送一个暂停的信号，记录完成后再发送一个恢复的信号</li>
+<li>为了kill掉执行超时或者不必要的子进程</li>
+</ul>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">fpm_got_signal</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="n">ev</span><span class="p">,</span> <span class="kt">short</span> <span class="n">which</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span> <span class="n">arg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="n">c</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">res</span><span class="p">,</span> <span class="n">ret</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">ev</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">;</span><span class="c1">//这个fd就是sp[0]</span>
+
+    <span class="k">do</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="p">{</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span><span class="c1">//读取信号处理回调函数sig_handler向sp[1]写入的那个信号标记</span>
+        <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">res</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">==</span> <span class="n">EINTR</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//没有信号标记了，则退出</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EAGAIN</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EWOULDBLOCK</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_SYSERROR</span><span class="p">,</span> <span class="s">&quot;unable to read from the signal pipe&quot;</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">return</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">//信号处理回调函数sig_handler里信号量和信号标记的映射关系</span>
+        <span class="c1">//static const char sig_chars[NSIG + 1] = {</span>
+        <span class="c1">//    [SIGTERM] = &#39;T&#39;,</span>
+        <span class="c1">//    [SIGINT]  = &#39;I&#39;,</span>
+        <span class="c1">//    [SIGUSR1] = &#39;1&#39;,</span>
+        <span class="c1">//    [SIGUSR2] = &#39;2&#39;,</span>
+        <span class="c1">//    [SIGQUIT] = &#39;Q&#39;,</span>
+        <span class="c1">//    [SIGCHLD] = &#39;C&#39;</span>
+        <span class="c1">//};</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="sc">&#39;C&#39;</span> <span class="o">:</span>                  <span class="c1">// SIGCHLD ，收到子进程的终止或者暂停的信号</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_DEBUG</span><span class="p">,</span> <span class="s">&quot;received SIGCHLD&quot;</span><span class="p">);</span>
+                <span class="n">fpm_children_bury</span><span class="p">();</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">&#39;I&#39;</span> <span class="o">:</span>                  <span class="c1">// SIGINT，收到终止进程的信号</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;Terminating ...&quot;</span><span class="p">);</span>
+                <span class="n">fpm_pctl</span><span class="p">(</span><span class="n">FPM_PCTL_STATE_TERMINATING</span><span class="p">,</span> <span class="n">FPM_PCTL_ACTION_SET</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">&#39;T&#39;</span> <span class="o">:</span>                  <span class="c1">// SIGTERM，收到终止进程的信号</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;Terminating ...&quot;</span><span class="p">);</span>
+                <span class="n">fpm_pctl</span><span class="p">(</span><span class="n">FPM_PCTL_STATE_TERMINATING</span><span class="p">,</span> <span class="n">FPM_PCTL_ACTION_SET</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">&#39;Q&#39;</span> <span class="o">:</span>                  <span class="c1">// SIGQUIT，收到进程退出的信号</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;Finishing ...&quot;</span><span class="p">);</span>
+                <span class="n">fpm_pctl</span><span class="p">(</span><span class="n">FPM_PCTL_STATE_FINISHING</span><span class="p">,</span> <span class="n">FPM_PCTL_ACTION_SET</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">&#39;1&#39;</span> <span class="o">:</span>                  <span class="c1">// SIGUSR1, 收到重新打开日志的信号</span>
+                <span class="n">fpm_stdio_open_error_log</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+                <span class="n">fpm_log_open</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="sc">&#39;2&#39;</span> <span class="o">:</span>                  <span class="c1">// SIGUSR2，收到reload的信号</span>
+                <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_NOTICE</span><span class="p">,</span> <span class="s">&quot;Reloading in progress ...&quot;</span><span class="p">);</span>
+                <span class="n">fpm_pctl</span><span class="p">(</span><span class="n">FPM_PCTL_STATE_RELOADING</span><span class="p">,</span> <span class="n">FPM_PCTL_ACTION_SET</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">is_child</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<div class="section" id="id10">
+<h4><a class="toc-backref" href="#id27">4.3.1&nbsp;&nbsp;&nbsp;来自子进程信号的处理逻辑</a></h4>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_children_bury</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">status</span><span class="p">;</span>
+    <span class="kt">pid_t</span> <span class="n">pid</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">fpm_child_s</span> <span class="o">*</span> <span class="n">child</span><span class="p">;</span>
+
+    <span class="c1">//如果子进程暂停或者终止了，则返回相应的pid，否则退出循环</span>
+    <span class="k">while</span> <span class="p">(</span> <span class="p">(</span><span class="n">pid</span> <span class="o">=</span> <span class="n">waitpid</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="n">WNOHANG</span> <span class="o">|</span> <span class="n">WUNTRACED</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">];</span>
+        <span class="kt">int</span> <span class="n">severity</span> <span class="o">=</span> <span class="n">ZLOG_NOTICE</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">restart_child</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+        <span class="n">child</span> <span class="o">=</span> <span class="n">fpm_child_find</span><span class="p">(</span><span class="n">pid</span><span class="p">);</span><span class="c1">//查找该子进程</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">WIFEXITED</span><span class="p">(</span><span class="n">status</span><span class="p">))</span> <span class="p">{</span> <span class="c1">//如果子进程正常退出</span>
+            <span class="c1">//...............</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">WIFSIGNALED</span><span class="p">(</span><span class="n">status</span><span class="p">))</span> <span class="p">{</span> <span class="c1">//如果子进程因为信号而退出的</span>
+            <span class="c1">//.................</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">WIFSTOPPED</span><span class="p">(</span><span class="n">status</span><span class="p">))</span> <span class="p">{</span> <span class="c1">//如果子进程暂停的话，这种主要是主进程先发了一个暂停信号给子进程，用户收集slow log</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">child</span> <span class="o">&amp;&amp;</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">tracer</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//在tracer函数里会记录当前子进程的堆栈信息，然后再发一个恢复的信号给子进程</span>
+                <span class="n">child</span><span class="o">-&gt;</span><span class="n">tracer</span><span class="p">(</span><span class="n">child</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">//..........</span>
+            <span class="n">fpm_pctl_child_exited</span><span class="p">();</span><span class="c1">//如果是停止进程的话，则在该函数内会执行exit使主进程退出</span>
+
+            <span class="c1">//如果子进程异常退出个数超过一定的配置项，则要reload</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">last_faults</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">WTERMSIG</span><span class="p">(</span><span class="n">status</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIGSEGV</span> <span class="o">||</span> <span class="n">WTERMSIG</span><span class="p">(</span><span class="n">status</span><span class="p">)</span> <span class="o">==</span> <span class="n">SIGBUS</span><span class="p">))</span> <span class="p">{</span>
+                <span class="c1">//....................</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">restart_condition</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;failed processes threshold (%d in %d sec) is reached, initiating reload&quot;</span><span class="p">,</span>
+                            <span class="n">fpm_global_config</span><span class="p">.</span><span class="n">emergency_restart_threshold</span><span class="p">,</span> <span class="n">fpm_global_config</span><span class="p">.</span><span class="n">emergency_restart_interval</span><span class="p">);</span>
+                    <span class="n">fpm_pctl</span><span class="p">(</span><span class="n">FPM_PCTL_STATE_RELOADING</span><span class="p">,</span> <span class="n">FPM_PCTL_ACTION_SET</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="c1">//如果是异常退出的子进程，则需要由主进程来fork一个继续接受请求</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">restart_child</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">fpm_children_make</span><span class="p">(</span><span class="n">wp</span><span class="p">,</span> <span class="mi">1</span> <span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">is_child</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_ALERT</span><span class="p">,</span> <span class="s">&quot;oops, unknown child (%d) exited %s. Please open a bug report (https://bugs.php.net).&quot;</span><span class="p">,</span> <span class="n">pid</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="section" id="id11">
+<h4><a class="toc-backref" href="#id28">4.3.2&nbsp;&nbsp;&nbsp;来自外部信号的处理逻辑</a></h4>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_pctl</span><span class="p">(</span><span class="kt">int</span> <span class="n">new_state</span><span class="p">,</span> <span class="kt">int</span> <span class="n">action</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="n">action</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">FPM_PCTL_ACTION_SET</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">fpm_state</span> <span class="o">==</span> <span class="n">new_state</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// already in progress - just ignore duplicate signal</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="c1">//一开始，fpm_state 的初始值为 FPM_PCTL_STATE_NORMAL</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">fpm_state</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// check which states can be overridden</span>
+                <span class="k">case</span> <span class="nl">FPM_PCTL_STATE_NORMAL</span> <span class="p">:</span>
+                    <span class="c1">// &#39;normal&#39; can be overridden by any other state</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="nl">FPM_PCTL_STATE_RELOADING</span> <span class="p">:</span>
+                    <span class="c1">// &#39;reloading&#39; can be overridden by &#39;finishing&#39;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">new_state</span> <span class="o">==</span> <span class="n">FPM_PCTL_STATE_FINISHING</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="nl">FPM_PCTL_STATE_FINISHING</span> <span class="p">:</span>
+                    <span class="c1">// &#39;reloading&#39; and &#39;finishing&#39; can be overridden by &#39;terminating&#39;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">new_state</span> <span class="o">==</span> <span class="n">FPM_PCTL_STATE_TERMINATING</span><span class="p">)</span> <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="nl">FPM_PCTL_STATE_TERMINATING</span> <span class="p">:</span>
+                    <span class="c1">// nothing can override &#39;terminating&#39; state</span>
+                    <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_DEBUG</span><span class="p">,</span> <span class="s">&quot;not switching to &#39;%s&#39; state, because already in &#39;%s&#39; state&quot;</span><span class="p">,</span>
+                        <span class="n">fpm_state_names</span><span class="p">[</span><span class="n">new_state</span><span class="p">],</span> <span class="n">fpm_state_names</span><span class="p">[</span><span class="n">fpm_state</span><span class="p">]);</span>
+                    <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">fpm_signal_sent</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="n">fpm_state</span> <span class="o">=</span> <span class="n">new_state</span><span class="p">;</span>
+
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_DEBUG</span><span class="p">,</span> <span class="s">&quot;switching to &#39;%s&#39; state&quot;</span><span class="p">,</span> <span class="n">fpm_state_names</span><span class="p">[</span><span class="n">fpm_state</span><span class="p">]);</span>
+            <span class="c1">// fall down</span>
+
+        <span class="k">case</span> <span class="nl">FPM_PCTL_ACTION_TIMEOUT</span> <span class="p">:</span>
+            <span class="n">fpm_pctl_action_next</span><span class="p">();</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="k">case</span> <span class="nl">FPM_PCTL_ACTION_LAST_CHILD_EXITED</span> <span class="p">:</span>
+            <span class="n">fpm_pctl_action_last</span><span class="p">();</span>
+            <span class="k">break</span><span class="p">;</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">fpm_pctl_action_next</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">sig</span><span class="p">,</span> <span class="n">timeout</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">fpm_globals</span><span class="p">.</span><span class="n">running_children</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fpm_pctl_action_last</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">fpm_signal_sent</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fpm_state</span> <span class="o">==</span> <span class="n">FPM_PCTL_STATE_TERMINATING</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">SIGTERM</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">SIGQUIT</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="n">fpm_global_config</span><span class="p">.</span><span class="n">process_control_timeout</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fpm_signal_sent</span> <span class="o">==</span> <span class="n">SIGQUIT</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">SIGTERM</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">sig</span> <span class="o">=</span> <span class="n">SIGKILL</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">fpm_pctl_kill_all</span><span class="p">(</span><span class="n">sig</span><span class="p">);</span><span class="c1">//线所有的子进程发送信号</span>
+    <span class="n">fpm_signal_sent</span> <span class="o">=</span> <span class="n">sig</span><span class="p">;</span>
+    <span class="n">fpm_pctl_timeout_set</span><span class="p">(</span><span class="n">timeout</span><span class="p">);</span><span class="c1">//设置定时器，回调函数为fpm_pctl</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="case">
+<h2><a class="toc-backref" href="#id29">5&nbsp;&nbsp;&nbsp;具体case分析</a></h2>
+<div class="section" id="id12">
+<h3><a class="toc-backref" href="#id30">5.1&nbsp;&nbsp;&nbsp;由外界触发的信号</a></h3>
+<div class="section" id="id13">
+<h4><a class="toc-backref" href="#id31">5.1.1&nbsp;&nbsp;&nbsp;终止进程操作</a></h4>
+<p>这个是通过发送一个TERM终止信号给fpm的主进程实现的</p>
+<p>假设fpm主进程的pid为Pid，则执行以下命令就可以停掉php的主进程以及子进程:</p>
+<pre class="literal-block">
+kill -TERM Pid
+</pre>
+<p>按代码逻辑，实际上发生了这些事情</p>
+<ol class="arabic simple">
+<li>fpm主进程收到TERM信号，插入调用了信号处理回调函数 <tt class="docutils literal">sig_handler</tt> ，在该函数中会向 <tt class="docutils literal">sp[1]</tt> 这个socket <tt class="docutils literal">写入T</tt> 这个信号标记字符</li>
+<li>结束信号回调后，fpm主进程继续在 <tt class="docutils literal">fpm_event_loop</tt> 里循环监听事件，因为已经向sp[1]写入数据了，这个时候io复用模型就会返回 <tt class="docutils literal">sp[0]可读</tt> ，调用回调函数 <tt class="docutils literal">fpm_got_signal</tt></li>
+<li>在fpm_got_signal里 <tt class="docutils literal">读出T</tt> 这个信号标记字符，执行 <tt class="docutils literal">fpm_pctl</tt> ，一开始 <tt class="docutils literal">fpm_state</tt> 的状态为 <tt class="docutils literal">normal</tt> ，会走到 <tt class="docutils literal">fpm_pctl_action_next</tt></li>
+<li>在fpm_pctl_action_next里， 会做两件事，第一个是向每个子进程发信号，第二个是注册一个定时器</li>
+<li>向子进程发信号的时候，首先因为``fpm_signal_sent`` 初始化为0，fpm_state 为 FPM_PCTL_STATE_TERMINATING，所以向每个子进程发送的信号为 <tt class="docutils literal">SIGTERM</tt></li>
+<li>注册的定时器的回调函数为 <tt class="docutils literal">fpm_pctl_action</tt> ，其实是产生 <tt class="docutils literal">fpm_pctl(FPM_PCTL_STATE_UNSPECIFIED, FPM_PCTL_ACTION_TIMEOUT)</tt> 这样一个调用</li>
+<li>回到 fpm_got_signal 后，继续从sokcet里读信号标记字符，但是这个时候已经没有了，于是退出函数，回到 <tt class="docutils literal">fpm_event_loop</tt> ，这个时候socket监听已经完成，开始处理定时器事件</li>
+<li>在步骤6里提到会注册一个定时器，于是会执行 <tt class="docutils literal">fpm_pctl_action</tt> 这个定时器的回调函数，即 <tt class="docutils literal">fpm_pctl</tt></li>
+<li>在 <tt class="docutils literal">fpm_pctl</tt> 里，因为传入的参数里action为 FPM_PCTL_ACTION_TIMEOUT，于是会继续调用 <tt class="docutils literal">fpm_pctl_action_next</tt></li>
+<li>在等待 <tt class="docutils literal">process_control_timeout</tt>  的时间后, 定时器会再次调用 <tt class="docutils literal">fpm_pctl_action_next</tt> 时，fpm_signal_sent 已经为 SIGTERM，于是要向子进程发送的信号为 <tt class="docutils literal">SIGKILL</tt> ，同时也设置了和之前一样的定时器事件(插入会被忽略)</li>
+<li>总结一些，主进程向子进程发送了两次信号，第一次为 <tt class="docutils literal">SIGTERM</tt> ， 第二次为 <tt class="docutils literal">SIGKILL</tt> ，并结束了定时器时间，重新开始监听socket事件以及处理定时器事件</li>
+<li>这个时候，子进程由于收到了 <tt class="docutils literal">SIGKILL</tt> 信号，退出了，同时父进程即主进程会收到子进程退出的信号 <tt class="docutils literal">SIGCHLD</tt> ， 于是信号处理回调函数 <tt class="docutils literal">sig_handler</tt> 会向 <tt class="docutils literal">sp[1]</tt> 这个socket <tt class="docutils literal">写入C</tt> 这个信号标记字符</li>
+<li>当主进程处理socket事件的时候，io复用模型就会返回 <tt class="docutils literal">sp[0]可读</tt> ，调用回调函数 <tt class="docutils literal">fpm_got_signal</tt></li>
+<li>在fpm_got_signal里 <tt class="docutils literal">读出C</tt> 这个信号标记字符，执行 <tt class="docutils literal">fpm_children_bury</tt> ，通过 <tt class="docutils literal">waitpid</tt> 获取到退出子进程的status，来判断是暂停、正常退出或者异常退出了</li>
+<li>由于是被kill的，于是会走到 <tt class="docutils literal">WIFSIGNALED(status)</tt> 非0这个分支上，打印一条日志，之后走到 <tt class="docutils literal">fpm_pctl_child_exited</tt> ，当处理到最后一个子进程的时候，就会走到 <tt class="docutils literal">fpm_pctl</tt></li>
+<li>由于action为 <tt class="docutils literal">FPM_PCTL_ACTION_LAST_CHILD_EXITED</tt> ，则调用 <tt class="docutils literal">fpm_pctl_action_last</tt> ，这个时候 fpm_state 为 FPM_PCTL_STATE_TERMINATING，于是调用 <tt class="docutils literal">fpm_pctl_exit</tt></li>
+<li>在fpm_pctl_exit里释放完各种资源，调用 <tt class="docutils literal">exit</tt> ，至此主进程也退出了</li>
+</ol>
+<p><tt class="docutils literal">存在的问题</tt></p>
+<p>主进程会调用两次fpm_pctl_action_next，在fpm_pctl_action_next里会向子进程发信号，同时设置定时器</p>
+<p><tt class="docutils literal">第一次的定时器设置成功了，但是第二次的定时器却设置失败了</tt> ，原因是在插入的时候定时器列表里已经有了 <tt class="docutils literal">pctl_event</tt> 了</p>
+<div class="highlight"><pre><span class="k">static</span> <span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="nf">fpm_event_queue_isset</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_event_queue_s</span> <span class="o">*</span> <span class="n">queue</span><span class="p">,</span> <span class="k">struct</span> <span class="n">fpm_event_s</span> <span class="o">*</span> <span class="n">ev</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">queue</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">queue</span><span class="o">-&gt;</span><span class="n">ev</span> <span class="o">==</span> <span class="n">ev</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//~~~,here</span>
+            <span class="k">return</span> <span class="n">ev</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+<p>大概的场景是这样的，fpm的主进程在遍历定时器列表的时候，当遍历到 <tt class="docutils literal">pctl_event</tt> 这个定时器的时候，会走到重新插入 <tt class="docutils literal">pctl_event</tt> 这个定时器的逻辑</p>
+<p>因为重复，所以插入失败了，但是 <tt class="docutils literal">pctl_event</tt> 这个定时器插入的时候是 <tt class="docutils literal">一次性的，执行完回调函数后，会从链表里删除</tt></p>
+<p><tt class="docutils literal">这个不会影响结果，但是会是一个坑</tt></p>
+</div>
+<div class="section" id="id14">
+<h4><a class="toc-backref" href="#id32">5.1.2&nbsp;&nbsp;&nbsp;优雅停止服务操作</a></h4>
+<p>其实这个也不是啥优雅退出，子进程还没有执行完就被强制退出了</p>
+<p>具体是通过发送一个SIGQUIT终止信号给fpm的主进程实现的</p>
+<p>假设fpm主进程的pid为Pid，则执行以下命令就可以停掉php的主进程以及子进程:</p>
+<pre class="literal-block">
+kill -QUIT Pid
+</pre>
+<p>按代码逻辑，实际上发生了这些事情</p>
+<ol class="arabic simple">
+<li>fpm主进程收到QUIT信号，插入调用了信号处理回调函数 <tt class="docutils literal">sig_handler</tt> ，在该函数中会向 <tt class="docutils literal">sp[1]</tt> 这个socket <tt class="docutils literal">写入Q</tt> 这个信号标记字符</li>
+<li>结束信号回调后，fpm主进程继续在 <tt class="docutils literal">fpm_event_loop</tt> 里循环监听事件，因为已经向sp[1]写入数据了，这个时候io复用模型就会返回 <tt class="docutils literal">sp[0]可读</tt> ，调用回调函数 <tt class="docutils literal">fpm_got_signal</tt></li>
+<li>在fpm_got_signal里 <tt class="docutils literal">读出Q</tt> 这个信号标记字符，执行 <tt class="docutils literal">fpm_pctl</tt> ，一开始 <tt class="docutils literal">fpm_state</tt> 的状态为 <tt class="docutils literal">normal</tt> ，会走到 <tt class="docutils literal">fpm_pctl_action_next</tt></li>
+<li>在fpm_pctl_action_next里， 会做两件事，第一个是向每个子进程发信号，第二个是注册一个定时器</li>
+<li>向子进程发信号的时候，首先因为``fpm_signal_sent`` 初始化为0，fpm_state 为 FPM_PCTL_STATE_FINISHING，所以向每个子进程发送的信号为 <tt class="docutils literal">SIGQUIT</tt> , 子进程收到信号后会设置全局变量 <tt class="docutils literal">in_shutdown</tt> 为 <tt class="docutils literal">1</tt> ，代码中有多处判断如果in_shutdown大于0，则直接返回，直到子进程退出</li>
+<li>注册的定时器的回调函数为 <tt class="docutils literal">fpm_pctl_action</tt> ，其实是产生 <tt class="docutils literal">fpm_pctl(FPM_PCTL_STATE_UNSPECIFIED, FPM_PCTL_ACTION_TIMEOUT)</tt> 这样一个调用</li>
+<li>回到 fpm_got_signal 后，继续从sokcet里读信号标记字符，但是这个时候已经没有了，于是退出函数，回到 <tt class="docutils literal">fpm_event_loop</tt> ，这个时候socket监听已经完成，开始处理定时器事件</li>
+<li>有两种情况，一种是如果在等待 <tt class="docutils literal">process_control_timeout</tt>  的时间后, 还没有收到子进程退出的信号，则定时器会调用 <tt class="docutils literal">fpm_pctl_action</tt> ，继续向子进程发送一个 <tt class="docutils literal">SIGTERM</tt> 信号, 然后一直等待子进程的信号，另外一种是在这个等待时间之内，子进程已经发生过来子进程退出的信号 <tt class="docutils literal">SIGCHLD</tt> 了，最终的处理逻辑都会是信号处理回调函数 <tt class="docutils literal">sig_handler</tt> 就向``sp[1]`` 这个socket <tt class="docutils literal">写入C</tt> 这个信号标记字符</li>
+<li>io event事件发现sp[0]可读，于是调用回调函数 <tt class="docutils literal">fpm_got_signal</tt> ，在fpm_got_signal里 <tt class="docutils literal">读出C</tt> 这个信号标记字符，执行 <tt class="docutils literal">fpm_children_bury</tt> ，通过 <tt class="docutils literal">waitpid</tt> 获取到退出子进程的status，这次判断出子进程是正常退出的</li>
+<li>之后走到 <tt class="docutils literal">fpm_pctl_child_exited</tt> ，当处理到最后一个子进程的时候，就会走到 <tt class="docutils literal">fpm_pctl</tt>，fpm_pctl_exit里释放完各种资源，调用 <tt class="docutils literal">exit</tt> ，至此主进程也退出了</li>
+<li>总结一些，优化退出的时候，主进程向子进程发了一个 <tt class="docutils literal">SIGQUIT</tt> 信号(或者是 <tt class="docutils literal">SIGQUIT</tt> + <tt class="docutils literal">SIGTERM</tt> )，然后就收到子进程退出的 <tt class="docutils literal">SIGCHLD</tt> 信号了，然后主进程也就退出了</li>
+</ol>
+</div>
+<div class="section" id="id15">
+<h4><a class="toc-backref" href="#id33">5.1.3&nbsp;&nbsp;&nbsp;重新打开日志操作</a></h4>
+<p>发送的是SIGUSR1信号，逻辑上和前面的一样， <tt class="docutils literal">fpm_got_signal</tt> 发现是信号标记为1的时候，就重新打开日志，比较简单</p>
+</div>
+<div class="section" id="reload">
+<h4><a class="toc-backref" href="#id34">5.1.4&nbsp;&nbsp;&nbsp;reload操作</a></h4>
+<p>具体是通过发送一个SIGUSR2信号给fpm的主进程实现的</p>
+<p>假设fpm主进程的pid为Pid，则执行以下命令就可以停掉php的主进程以及子进程:</p>
+<pre class="literal-block">
+kill -SIGUSR2 Pid
+</pre>
+<p>按代码逻辑，实际上发生了这些事情</p>
+<ol class="arabic simple">
+<li>fpm主进程收到QUIT信号，插入调用了信号处理回调函数 <tt class="docutils literal">sig_handler</tt> ，在该函数中会向 <tt class="docutils literal">sp[1]</tt> 这个socket <tt class="docutils literal">写入2</tt> 这个信号标记字符</li>
+<li>结束信号回调后，fpm主进程继续在 <tt class="docutils literal">fpm_event_loop</tt> 里循环监听事件，因为已经向sp[1]写入数据了，这个时候io复用模型就会返回 <tt class="docutils literal">sp[0]可读</tt> ，调用回调函数 <tt class="docutils literal">fpm_got_signal</tt></li>
+<li>在fpm_got_signal里 <tt class="docutils literal">读出2</tt> 这个信号标记字符，执行 <tt class="docutils literal">fpm_pctl</tt> ，一开始 <tt class="docutils literal">fpm_state</tt> 的状态为 <tt class="docutils literal">normal</tt> ，会走到 <tt class="docutils literal">fpm_pctl_action_next</tt></li>
+<li>在fpm_pctl_action_next里， 会做两件事，第一个是向每个子进程发信号，第二个是注册一个定时器</li>
+<li>向子进程发信号的时候，首先因为``fpm_signal_sent`` 初始化为0，fpm_state 为 FPM_PCTL_STATE_RELOADING，所以向每个子进程发送的信号为 <tt class="docutils literal">SIGQUIT</tt> , 子进程收到信号后会设置全局变量 <tt class="docutils literal">in_shutdown</tt> 为 <tt class="docutils literal">1</tt> ，代码中有多处判断如果in_shutdown大于0，则直接返回，直到子进程退出</li>
+<li>注册的定时器的回调函数为 <tt class="docutils literal">fpm_pctl_action</tt> ，其实是产生 <tt class="docutils literal">fpm_pctl(FPM_PCTL_STATE_UNSPECIFIED, FPM_PCTL_ACTION_TIMEOUT)</tt> 这样一个调用</li>
+<li>回到 fpm_got_signal 后，继续从sokcet里读信号标记字符，但是这个时候已经没有了，于是退出函数，回到 <tt class="docutils literal">fpm_event_loop</tt> ，这个时候socket监听已经完成，开始处理定时器事件</li>
+<li>有两种情况，一种是如果在等待 <tt class="docutils literal">process_control_timeout</tt>  的时间后, 还没有收到子进程退出的信号，则定时器会调用 <tt class="docutils literal">fpm_pctl_action</tt> ，继续向子进程发送一个 <tt class="docutils literal">SIGTERM</tt> 信号, 然后一直等待子进程的信号，另外一种是在这个等待时间之内，子进程已经发生过来子进程退出的信号 <tt class="docutils literal">SIGCHLD</tt> 了，最终的处理逻辑都会是信号处理回调函数 <tt class="docutils literal">sig_handler</tt> 就向``sp[1]`` 这个socket <tt class="docutils literal">写入C</tt> 这个信号标记字符</li>
+<li>io event事件发现sp[0]可读，于是调用回调函数 <tt class="docutils literal">fpm_got_signal</tt> ，在fpm_got_signal里 <tt class="docutils literal">读出C</tt> 这个信号标记字符，执行 <tt class="docutils literal">fpm_children_bury</tt> ，通过 <tt class="docutils literal">waitpid</tt> 获取到退出子进程的status，这次判断出子进程是正常退出的</li>
+<li>之后走到 <tt class="docutils literal">fpm_pctl_child_exited</tt> ，当处理到最后一个子进程的时候，就会走到 <tt class="docutils literal">fpm_pctl</tt>，进而走到 <tt class="docutils literal">fpm_pctl_action_last</tt> 里， 在 fpm_pctl_action_last 里判断为reload请求，则执行 <tt class="docutils literal">fpm_pctl_exec</tt> , 从而执行 <tt class="docutils literal">execvp</tt> 命令</li>
+<li>这个时候， <tt class="docutils literal">主进程(称为F)</tt> 开始重新执行 <tt class="docutils literal">main</tt> 主函数，重复了一轮fpm启动的逻辑，主进程F会 <tt class="docutils literal">fork出新的主进程X</tt> ，然后这个老的主进程退出，新的主进程X会fork出子进程，然后主进程监听由信号产生的socket事件以及定时器事件</li>
+<li>需要注意的是在 <tt class="docutils literal">fpm_sockets_init_main</tt> 里，新的主进程X会继承老的主进程F的socket</li>
+</ol>
+</div>
+</div>
+<div class="section" id="id16">
+<h3><a class="toc-backref" href="#id35">5.2&nbsp;&nbsp;&nbsp;由主进程触发的信号</a></h3>
+<p>fpm的主进程有定时器事件，周期性观察子进程的状态，比如是否执行超时或者是否需要记录slow log等等</p>
+<p>有三个定时器任务:</p>
+<ul class="simple">
+<li>fpm_pctl_action : 这个在前面已经介绍过了，主进程收到由外界产生的QUIT等信号时，会先向子进程发一个信号，然后就设置了 <tt class="docutils literal">fpm_pctl_action</tt> 这个一次性的定时器，用于向子进程发送第二个信号</li>
+<li>fpm_pctl_heartbeat : 主要是周期性观察子进程，做两件事情，一个是观察子进程否执行超时(由主进程kill后再fork子进程)或者执行超过一定的时间，需要记录slow log</li>
+<li>fpm_pctl_perform_idle_server_maintenance_heartbeat : 主要是周期性观察子进程，做三件事情，第一个是更新 <tt class="docutils literal">fpm scoreboard</tt> 的状态，第二个是判断pm的类型，如果是 <tt class="docutils literal">PM_STYLE_ONDEMAND</tt> 则kill掉不需要的空闲子进程，如果是 <tt class="docutils literal">PM_STYLE_DYNAMIC</tt> ，也是kill掉不需要的空闲子进程或者增加子进程</li>
+</ul>
+<p>主要介绍一下 <tt class="docutils literal">fpm_pctl_heartbeat</tt> ，即监控子进程的执行时间，先来看 <tt class="docutils literal">fpm_pctl_heartbeat</tt> ，定时器调用这个函数时候，传入的参数 <tt class="docutils literal">which</tt> 都是 <tt class="docutils literal">FPM_EV_TIMEOUT</tt> ，实际上就是调用 <tt class="docutils literal">fpm_pctl_check_request_timeout</tt></p>
+<p>在 <tt class="docutils literal">fpm_pctl_check_request_timeout</tt> 里也就是遍历每个pool，看是否执行超时或者需要记录slow log，然后检查每个子进程</p>
+<div class="highlight"><pre><span class="k">static</span> <span class="kt">void</span> <span class="nf">fpm_pctl_check_request_timeout</span><span class="p">(</span><span class="k">struct</span> <span class="n">timeval</span><span class="o">*</span> <span class="n">now</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">fpm_worker_pool_s</span><span class="o">*</span> <span class="n">wp</span><span class="p">;</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">wp</span> <span class="o">=</span> <span class="n">fpm_worker_all_pools</span><span class="p">;</span> <span class="n">wp</span><span class="p">;</span> <span class="n">wp</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">terminate_timeout</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">request_terminate_timeout</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">slowlog_timeout</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">request_slowlog_timeout</span><span class="p">;</span>
+        <span class="k">struct</span> <span class="n">fpm_child_s</span><span class="o">*</span> <span class="n">child</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">terminate_timeout</span> <span class="o">||</span> <span class="n">slowlog_timeout</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">child</span> <span class="o">=</span> <span class="n">wp</span><span class="o">-&gt;</span><span class="n">children</span><span class="p">;</span> <span class="n">child</span><span class="p">;</span> <span class="n">child</span> <span class="o">=</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">fpm_request_check_timed_out</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">now</span><span class="p">,</span> <span class="n">terminate_timeout</span><span class="p">,</span> <span class="n">slowlog_timeout</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+<p>在 <tt class="docutils literal">fpm_request_check_timed_out</tt> 里就做两件事，检查是否执行超时和是否需要记录slow log</p>
+<ul class="simple">
+<li>slow log: 主进程会发一个 <tt class="docutils literal">SIGSTOP信号</tt> 给子进程，让子进程暂停，同时设置了暂停后的回调函数 <tt class="docutils literal">fpm_php_trace</tt> ，子进程暂停后，又会发一个 <tt class="docutils literal">SIGCHLD信号</tt> 给主进程，主进程收到后(fpm_got_signal -&gt; fpm_children_bury -&gt; WIFSTOPPED(status))，执行设置的回调函数 <tt class="docutils literal">fpm_php_trace</tt> ，在这个函数里会采集子进程的状态，然后再发一个 <tt class="docutils literal">SIGCONT信号</tt> 给子进程，让子进程继续执行</li>
+<li>terminate_timeout: 主进程会发一个 <tt class="docutils literal">SIGTERM信号</tt> 给子进程，子进程收到后又会发一个 <tt class="docutils literal">SIGCHLD信号</tt> 给主进程，主进程(fpm_got_signal -&gt; fpm_children_bury -&gt; WIFSIGNALED(status))会重新fork子进程</li>
+</ul>
+<div class="highlight"><pre><span class="kt">void</span> <span class="nf">fpm_request_check_timed_out</span><span class="p">(</span><span class="k">struct</span> <span class="n">fpm_child_s</span><span class="o">*</span> <span class="n">child</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeva</span><span class="o">*</span> <span class="n">now</span><span class="p">,</span> <span class="kt">int</span> <span class="n">terminate_timeout</span><span class="p">,</span> <span class="kt">int</span> <span class="n">slowlog_timeout</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">fpm_scoreboard_proc_s</span> <span class="n">proc</span><span class="p">,</span> <span class="o">*</span> <span class="n">proc_p</span><span class="p">;</span>
+
+    <span class="n">proc_p</span> <span class="o">=</span> <span class="n">fpm_scoreboard_proc_acquire</span><span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">scoreboard</span><span class="p">,</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">scoreboard_i</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">proc_p</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;failed to acquire scoreboard&quot;</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">proc</span> <span class="o">=</span> <span class="o">*</span> <span class="n">proc_p</span><span class="p">;</span>
+    <span class="n">fpm_scoreboard_proc_release</span><span class="p">(</span><span class="n">proc_p</span><span class="p">);</span>
+
+<span class="cp">#if HAVE_FPM_TRACE</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">!=</span> <span class="n">proc</span><span class="p">.</span><span class="n">accepted</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">||</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">!=</span> <span class="n">proc</span><span class="p">.</span><span class="n">accepted</span><span class="p">.</span><span class="n">tv_usec</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span><span class="p">.</span><span class="n">tv_usec</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="cp">#endif</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">request_stage</span> <span class="o">&gt;</span> <span class="n">FPM_REQUEST_ACCEPTING</span> <span class="o">&amp;&amp;</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_stage</span> <span class="o">&lt;</span> <span class="n">FPM_REQUEST_END</span><span class="p">)</span> <span class="p">{</span> <span class="c1">//这个条件设置的太小了，会导致php 出现fin包丢失而hang住的</span>
+        <span class="kt">char</span> <span class="n">purified_script_filename</span><span class="p">[</span><span class="k">sizeof</span><span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">)];</span>
+        <span class="k">struct</span> <span class="n">timeval</span> <span class="n">tv</span><span class="p">;</span>
+
+        <span class="n">timersub</span><span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">proc</span><span class="p">.</span><span class="n">accepted</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">);</span>
+
+<span class="cp">#if HAVE_FPM_TRACE</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">slowlog_timeout</span> <span class="o">&amp;&amp;</span>
+                <span class="n">proc</span><span class="p">.</span><span class="n">request_stage</span> <span class="o">==</span> <span class="n">FPM_REQUEST_EXECUTING</span> <span class="o">&amp;&amp;</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">&gt;=</span> <span class="n">slowlog_timeout</span><span class="p">)</span> <span class="p">{</span>
+
+            <span class="n">str_purify_filename</span><span class="p">(</span><span class="n">purified_script_filename</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">));</span>
+
+            <span class="n">child</span><span class="o">-&gt;</span><span class="n">slow_logged</span> <span class="o">=</span> <span class="n">proc</span><span class="p">.</span><span class="n">accepted</span><span class="p">;</span>
+            <span class="n">child</span><span class="o">-&gt;</span><span class="n">tracer</span> <span class="o">=</span> <span class="n">fpm_php_trace</span><span class="p">;</span> <span class="c1">//设置了暂停后的回调函数，当子进程暂停后，会发信号SIGCHLD给主进程，主进程会调用child-&gt;tracer这个回调函数的</span>
+
+            <span class="n">fpm_trace_signal</span><span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">);</span><span class="c1">//在fpm_trace_signal里会发一个SIGSTOP信号给子进程，让子进程暂停</span>
+
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;[pool %s] child %d, script &#39;%s&#39; (request: </span><span class="se">\&quot;</span><span class="s">%s %s</span><span class="se">\&quot;</span><span class="s">) executing too slow (%d.%06d sec), logging&quot;</span><span class="p">,</span>
+                <span class="n">child</span><span class="o">-&gt;</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">purified_script_filename</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_method</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_uri</span><span class="p">,</span>
+                <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+<span class="cp">#endif</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">terminate_timeout</span> <span class="o">&amp;&amp;</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">&gt;=</span> <span class="n">terminate_timeout</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">str_purify_filename</span><span class="p">(</span><span class="n">purified_script_filename</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">proc</span><span class="p">.</span><span class="n">script_filename</span><span class="p">));</span>
+            <span class="n">fpm_pctl_kill</span><span class="p">(</span><span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">FPM_PCTL_TERM</span><span class="p">);</span><span class="c1">//发一个SIGTERM信号给子进程，子进程收到后又会发一个SIGCHLD给主进程，主进程会重新fork子进程</span>
+
+            <span class="n">zlog</span><span class="p">(</span><span class="n">ZLOG_WARNING</span><span class="p">,</span> <span class="s">&quot;[pool %s] child %d, script &#39;%s&#39; (request: </span><span class="se">\&quot;</span><span class="s">%s %s</span><span class="se">\&quot;</span><span class="s">) execution timed out (%d.%06d sec), terminating&quot;</span><span class="p">,</span>
+                <span class="n">child</span><span class="o">-&gt;</span><span class="n">wp</span><span class="o">-&gt;</span><span class="n">config</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">child</span><span class="o">-&gt;</span><span class="n">pid</span><span class="p">,</span> <span class="n">purified_script_filename</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_method</span><span class="p">,</span> <span class="n">proc</span><span class="p">.</span><span class="n">request_uri</span><span class="p">,</span>
+                <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tv</span><span class="p">.</span><span class="n">tv_usec</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id17">
+<h2><a class="toc-backref" href="#id36">6&nbsp;&nbsp;&nbsp;总结</a></h2>
+<ul class="simple">
+<li>fpm通过socket对把 <tt class="docutils literal">信号事件转换为socket事件</tt> 来处理</li>
+<li>fpm主进程轮询 <tt class="docutils literal">监听socket事件与定时器事件</tt></li>
+<li>主进程收到外界信号后，会向子进程发送信号，而子进程也会回复一个 <tt class="docutils literal">SIGCHLD</tt> 信号给主进程，由主进程判断子进程退出的原因，然后进行相应的处理</li>
+</ul>
+<p>最后再附上一张信号传递图</p>
+<img alt="" src="imgs/php-fpm-signal.png" />
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 lihongbin
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="/theme/js/respond.min.js"></script>
+
+
+</body>
+</html>
