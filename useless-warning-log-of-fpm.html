@@ -214,7 +214,7 @@ Use it with caution.
 <p>在打印日志的时候，应该判断一下这样情况，如果是静态&amp;&amp;已经达到最大子进程数，则不打印warning，源码修改如下:</p>
 <pre class="literal-block">
 if (!warned &amp;&amp; fpm_global_config.process_max &gt; 0 &amp;&amp; fpm_globals.running_children &gt;= fpm_global_config.process_max) {
-    if (wp-&gt;config-&gt;pm != PM_STYLE_STATIC ||  wp-&gt;running_children &lt; max) { //~~~~~
+    if (wp-&gt;running_children &lt; max) { //~~~~~
         warned = 1;
         zlog(ZLOG_WARNING, &quot;The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'&quot;);
     }

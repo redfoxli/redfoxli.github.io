@@ -1533,7 +1533,7 @@ Use it with caution.
 &lt;p&gt;在打印日志的时候，应该判断一下这样情况，如果是静态&amp;amp;&amp;amp;已经达到最大子进程数，则不打印warning，源码修改如下:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 if (!warned &amp;amp;&amp;amp; fpm_global_config.process_max &amp;gt; 0 &amp;amp;&amp;amp; fpm_globals.running_children &amp;gt;= fpm_global_config.process_max) {
-    if (wp-&amp;gt;config-&amp;gt;pm != PM_STYLE_STATIC ||  wp-&amp;gt;running_children &amp;lt; max) { //~~~~~
+    if (wp-&amp;gt;running_children &amp;lt; max) { //~~~~~
         warned = 1;
         zlog(ZLOG_WARNING, &amp;quot;The maximum number of processes has been reached. Please review your configuration and consider raising 'process.max'&amp;quot;);
     }
