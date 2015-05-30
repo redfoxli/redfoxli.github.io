@@ -211,7 +211,7 @@ Use it with caution.
 </div>
 <div class="section" id="id9">
 <h2><a class="toc-backref" href="#id19">3&nbsp;&nbsp;&nbsp;解决</a></h2>
-<p>在打印日志的时候，应该判断一下这样情况，如果是静态&amp;&amp;已经达到最大子进程数，则不打印warning，源码修改如下:</p>
+<p>在打印日志的时候，应该判断一下这样情况，如果这个pool已经达到最大子进程数，就不打印warning日志，源码修改如下:</p>
 <pre class="literal-block">
 if (!warned &amp;&amp; fpm_global_config.process_max &gt; 0 &amp;&amp; fpm_globals.running_children &gt;= fpm_global_config.process_max) {
     if (wp-&gt;running_children &lt; max) { //~~~~~

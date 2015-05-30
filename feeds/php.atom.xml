@@ -1530,7 +1530,7 @@ Use it with caution.
 &lt;/div&gt;
 &lt;div class="section" id="id9"&gt;
 &lt;h2&gt;&lt;a class="toc-backref" href="#id19"&gt;3&amp;nbsp;&amp;nbsp;&amp;nbsp;解决&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;在打印日志的时候，应该判断一下这样情况，如果是静态&amp;amp;&amp;amp;已经达到最大子进程数，则不打印warning，源码修改如下:&lt;/p&gt;
+&lt;p&gt;在打印日志的时候，应该判断一下这样情况，如果这个pool已经达到最大子进程数，就不打印warning日志，源码修改如下:&lt;/p&gt;
 &lt;pre class="literal-block"&gt;
 if (!warned &amp;amp;&amp;amp; fpm_global_config.process_max &amp;gt; 0 &amp;amp;&amp;amp; fpm_globals.running_children &amp;gt;= fpm_global_config.process_max) {
     if (wp-&amp;gt;running_children &amp;lt; max) { //~~~~~
